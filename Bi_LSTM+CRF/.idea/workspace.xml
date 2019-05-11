@@ -1,16 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="12fbad89-ea40-421e-9348-dfc0b323a512" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/log/log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/log/log.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/result/test.preds.txt" beforeDir="false" afterPath="$PROJECT_DIR$/result/test.preds.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/result/train.preds.txt" beforeDir="false" afterPath="$PROJECT_DIR$/result/train.preds.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/result/validation.preds.txt" beforeDir="false" afterPath="$PROJECT_DIR$/result/validation.preds.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ModelPredict.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ModelPredict.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/TrainModel.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/TrainModel.py" afterDir="false" />
-    </list>
+    <list default="true" id="12fbad89-ea40-421e-9348-dfc0b323a512" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -88,7 +79,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.ModelPredict">
+  <component name="RunManager" selected="Python.TrainModel">
     <configuration name="ModelPredict" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="NER" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -154,8 +145,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.ModelPredict" />
         <item itemvalue="Python.TrainModel" />
+        <item itemvalue="Python.ModelPredict" />
         <item itemvalue="Python.main" />
       </list>
     </recent_temporary>
@@ -215,22 +206,22 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/ModelPredict.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="120">
-          <caret line="96" column="56" lean-forward="true" selection-start-line="96" selection-start-column="56" selection-end-line="96" selection-end-column="56" />
-          <folding>
-            <element signature="e#139#163#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/TrainModel.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="150">
           <caret line="113" column="89" selection-start-line="113" selection-start-column="89" selection-end-line="113" selection-end-column="89" />
           <folding>
             <element signature="e#112#135#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/ModelPredict.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="210">
+          <caret line="99" column="6" selection-start-line="99" selection-start-column="6" selection-end-line="99" selection-end-column="6" />
+          <folding>
+            <element signature="e#139#163#0" expanded="true" />
           </folding>
         </state>
       </provider>
