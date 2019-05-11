@@ -107,7 +107,7 @@ class TrainModel(object):
                 embeddings = tf.nn.embedding_lookup(word2vec, word_ids)
             else:
                 # 通过模型训练词向量
-                with Path(params['vocabulary']).open('r') as fi:
+                with Path(params['vocabulary']).open('r',encoding='utf-8') as fi:
                     vocab = [word for idx , word in enumerate(fi) if word.strip() != '']
                 word2vec = tf.get_variable('word2vec',[len(vocab), params['word2vec_dim']])
                 # 为padding_tag添加词向量,用全0向量表示,注意shape要保持一致
