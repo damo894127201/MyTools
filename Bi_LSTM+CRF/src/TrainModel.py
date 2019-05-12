@@ -220,7 +220,7 @@ class TrainModel(object):
             'buffer':self.cfg.getint('params','buffer'),
             'lstm_size':self.cfg.getint('params','lstm_size'),
             'shuffle_and_repeat':self.cfg.getint('params','shuffle_and_repeat'),
-            'if_load_word2vec':self.cfg.getint('params','if_load_word2vec'),# 是否加载自己的词典
+            'if_load_word2vec':self.cfg.getint('params','if_load_word2vec'),# 是否加载自己的词向量
             'padding_tag':self.cfg.get('params','padding_tag'),# 填充符号tag
             'vocabulary':self.cfg.get('data','vocabulary'),# 词包路径
             'tags':self.cfg.get('data','tags'), # 存储tag的所有类别的路径
