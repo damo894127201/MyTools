@@ -1,0 +1,52 @@
+
+
+NER
+|
+|-- bin/             # 程序入口
+|   |   main.py
+|
+|--  config/         # 配置文件
+|   |   config.ini
+|
+|--  data/           # 数据集
+|   |   tag/                # 所有实体的标记
+|       |  tags.txt            # 最后一个标记是训练阶段填充用的padding_tag,此tag可在配置文件中设置,注意padding_tag要与其它所有的标记都不同
+|   |   test/        # 测试集
+|       |  data.txt         # 数据
+|       |  tag.txt          # 数据对应的标记
+|   |   train/       # 训练集
+|       |  data.txt
+|       |  tag.txt
+|   |   validation/  # 验证集
+|       |  data.txt
+|       |  tag.txt
+|   |   char_vocabulary/  # 汉语单字或英文字母的词包
+|       |  vocab.txt        # 注意该词包中单词的上下顺序要与char2vec/char2vec.npz存储的词向量顺序保持一致
+|   |   word_vocabulary/  # 汉语词语或英文单词的词包
+|       |  vocab.txt        # 注意该词包中单词的上下顺序要与word2vec/glove.npz存储的词向量顺序保持一致
+|   |   char2vec/    # 汉语单字或英文字母的词向量
+|       |  glove.npz        # np.savez('glove.npz',embeddings=embeddings)
+|   |   word2vec/    # 汉语词语或英文单词的词向量
+|       |  glove.npz        # np.savez('glove.npz',embeddings=embeddings)
+|
+|-- log/             # 日志
+|   |  log.txt
+|
+|-- image/           # 图片
+|
+|-- model/           # 训练后的模型,保持所有的checkpoint
+|
+|-- result/          # 用训练后的模型预测的结果
+|   |  test.preds.txt       # 测试集 ,文件共分三个字段,第一个字段是单词,第二个字段是原始的标记,第三个字段是预测后的标记
+|   |  train.preds.txt      # 训练集
+|   |  validation.preds.txt # 验证集
+|
+|-- src/             # 源代码
+|   |  __init__.py
+|   |  ModelPredict.py      # 加载训练好的模型,做预测
+|   |  TrainModel.py        # 训练模型
+|
+|   README.md
+|   requirements.txt
+
+
