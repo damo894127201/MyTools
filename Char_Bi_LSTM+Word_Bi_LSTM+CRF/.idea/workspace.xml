@@ -2,7 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="12fbad89-ea40-421e-9348-dfc0b323a512" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/../Bi_LSTM+CRF/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../Bi_LSTM+CRF/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Bi_LSTM+CRF/image/software.png" beforeDir="false" afterPath="$PROJECT_DIR$/../Bi_LSTM+CRF/image/software.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Bi_LSTM+CRF/软件目录结构.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../Bi_LSTM+CRF/软件目录结构.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/image/software.png" beforeDir="false" afterPath="$PROJECT_DIR$/image/software.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/软件目录结构.txt" beforeDir="false" afterPath="$PROJECT_DIR$/软件目录结构.txt" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -15,7 +18,7 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/TrainModel.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-268">
+            <state relative-caret-position="30">
               <caret line="210" column="66" selection-start-line="210" selection-start-column="66" selection-end-line="210" selection-end-column="66" />
               <folding>
                 <element signature="e#112#135#0" expanded="true" />
@@ -27,7 +30,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/ModelPredict.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="7290">
+            <state relative-caret-position="7170">
               <caret line="243" column="18" selection-start-line="243" selection-start-column="18" selection-end-line="243" selection-end-column="18" />
               <folding>
                 <element signature="e#139#163#0" expanded="true" />
@@ -113,7 +116,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="H:/论文/code" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RunDashboard">
@@ -255,22 +258,22 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/ModelPredict.py">
+    <entry file="file://$PROJECT_DIR$/src/TrainModel.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="7290">
-          <caret line="243" column="18" selection-start-line="243" selection-start-column="18" selection-end-line="243" selection-end-column="18" />
+        <state relative-caret-position="30">
+          <caret line="210" column="66" selection-start-line="210" selection-start-column="66" selection-end-line="210" selection-end-column="66" />
           <folding>
-            <element signature="e#139#163#0" expanded="true" />
+            <element signature="e#112#135#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/TrainModel.py">
+    <entry file="file://$PROJECT_DIR$/src/ModelPredict.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-268">
-          <caret line="210" column="66" selection-start-line="210" selection-start-column="66" selection-end-line="210" selection-end-column="66" />
+        <state relative-caret-position="7170">
+          <caret line="243" column="18" selection-start-line="243" selection-start-column="18" selection-end-line="243" selection-end-column="18" />
           <folding>
-            <element signature="e#112#135#0" expanded="true" />
+            <element signature="e#139#163#0" expanded="true" />
           </folding>
         </state>
       </provider>

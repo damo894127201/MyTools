@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<!-- saved from url=(0202)https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/ -->
+<html lang="zh-CN" class="js"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+
+<meta name="keywords" content="">
+<meta name="description" content="[latexpage]这一篇文章，主要讲一下用深度学习（神经网络）的方法来做命名实体识别。现在最主流最有效的方法基本上就是lstm+CRF了。其中CRF部分，只是把转移矩阵加进来了而已，而其它特征的提取则是交由神经网络来完成。当然了，特征提取这一部分我们也可以使用CNN，或者加入一些attentio...">
+
+
+	
+	<meta name="viewport" content="width=device-width">
+	<link rel="profile" href="http://gmpg.org/xfn/11">
+	<link rel="pingback" href="https://www.lookfor404.com/xmlrpc.php">
+	<!--[if lt IE 9]>
+	<script src="https://www.lookfor404.com/wp-content/themes/my-twentyfifteen/js/html5.js"></script>
+	<![endif]-->
+
+	<script src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/hm.js"></script><script>(function(html){html.className = html.className.replace(/\bno-js\b/,'js')})(document.documentElement);</script>
+<title>用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客</title>
+<link rel="dns-prefetch" href="https://s.w.org/">
+<link rel="alternate" type="application/rss+xml" title="找不到的博客 » Feed" href="https://www.lookfor404.com/feed/">
+<link rel="alternate" type="application/rss+xml" title="找不到的博客 » 评论Feed" href="https://www.lookfor404.com/comments/feed/">
+<link rel="alternate" type="application/rss+xml" title="找不到的博客 » 用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四）评论Feed" href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/feed/">
+		<script type="text/javascript">
+			window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/11.2.0\/72x72\/","ext":".png","svgUrl":"https:\/\/s.w.org\/images\/core\/emoji\/11.2.0\/svg\/","svgExt":".svg","source":{"concatemoji":"https:\/\/www.lookfor404.com\/wp-includes\/js\/wp-emoji-release.min.js?ver=5.1.1"}};
+			!function(a,b,c){function d(a,b){var c=String.fromCharCode;l.clearRect(0,0,k.width,k.height),l.fillText(c.apply(this,a),0,0);var d=k.toDataURL();l.clearRect(0,0,k.width,k.height),l.fillText(c.apply(this,b),0,0);var e=k.toDataURL();return d===e}function e(a){var b;if(!l||!l.fillText)return!1;switch(l.textBaseline="top",l.font="600 32px Arial",a){case"flag":return!(b=d([55356,56826,55356,56819],[55356,56826,8203,55356,56819]))&&(b=d([55356,57332,56128,56423,56128,56418,56128,56421,56128,56430,56128,56423,56128,56447],[55356,57332,8203,56128,56423,8203,56128,56418,8203,56128,56421,8203,56128,56430,8203,56128,56423,8203,56128,56447]),!b);case"emoji":return b=d([55358,56760,9792,65039],[55358,56760,8203,9792,65039]),!b}return!1}function f(a){var c=b.createElement("script");c.src=a,c.defer=c.type="text/javascript",b.getElementsByTagName("head")[0].appendChild(c)}var g,h,i,j,k=b.createElement("canvas"),l=k.getContext&&k.getContext("2d");for(j=Array("flag","emoji"),c.supports={everything:!0,everythingExceptFlag:!0},i=0;i<j.length;i++)c.supports[j[i]]=e(j[i]),c.supports.everything=c.supports.everything&&c.supports[j[i]],"flag"!==j[i]&&(c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&c.supports[j[i]]);c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&!c.supports.flag,c.DOMReady=!1,c.readyCallback=function(){c.DOMReady=!0},c.supports.everything||(h=function(){c.readyCallback()},b.addEventListener?(b.addEventListener("DOMContentLoaded",h,!1),a.addEventListener("load",h,!1)):(a.attachEvent("onload",h),b.attachEvent("onreadystatechange",function(){"complete"===b.readyState&&c.readyCallback()})),g=c.source||{},g.concatemoji?f(g.concatemoji):g.wpemoji&&g.twemoji&&(f(g.twemoji),f(g.wpemoji)))}(window,document,window._wpemojiSettings);
+		</script><script src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/wp-emoji-release.min.js" type="text/javascript" defer=""></script>
+		<style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style>
+	<link rel="stylesheet" id="wp-quicklatex-format-css" href="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex-format.css" type="text/css" media="all">
+<link rel="stylesheet" id="wp-block-library-css" href="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/style.min.css" type="text/css" media="all">
+<link rel="stylesheet" id="genericons-css" href="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/genericons.css" type="text/css" media="all">
+<link rel="stylesheet" id="twentyfifteen-style-css" href="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/style.css" type="text/css" media="all">
+<!--[if lt IE 9]>
+<link rel='stylesheet' id='twentyfifteen-ie-css'  href='https://www.lookfor404.com/wp-content/themes/my-twentyfifteen/css/ie.css?ver=20141010' type='text/css' media='all' />
+<![endif]-->
+<!--[if lt IE 8]>
+<link rel='stylesheet' id='twentyfifteen-ie7-css'  href='https://www.lookfor404.com/wp-content/themes/my-twentyfifteen/css/ie7.css?ver=20141010' type='text/css' media='all' />
+<![endif]-->
+<script type="text/javascript" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/jquery.js"></script>
+<script type="text/javascript" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/jquery-migrate.min.js"></script>
+<script type="text/javascript" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/wp-quicklatex-frontend.js"></script>
+<link rel="https://api.w.org/" href="https://www.lookfor404.com/wp-json/">
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="https://www.lookfor404.com/xmlrpc.php?rsd">
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="https://www.lookfor404.com/wp-includes/wlwmanifest.xml"> 
+<link rel="prev" title="用CRF做命名实体识别——NER系列（三）" href="https://www.lookfor404.com/%e7%94%a8crf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab-ner%e7%b3%bb%e5%88%97%ef%bc%88%e4%b8%89%ef%bc%89/">
+<link rel="next" title="命名实体识别的语料和代码" href="https://www.lookfor404.com/%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e7%9a%84%e8%af%ad%e6%96%99%e5%92%8c%e4%bb%a3%e7%a0%81/">
+<meta name="generator" content="WordPress 5.1.1">
+<link rel="canonical" href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/">
+<link rel="shortlink" href="https://www.lookfor404.com/?p=641">
+<link rel="alternate" type="application/json+oembed" href="https://www.lookfor404.com/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fwww.lookfor404.com%2F%25e7%2594%25a8%25e5%258f%258c%25e5%2590%2591lstmcrf%25e5%2581%259a%25e5%2591%25bd%25e5%2590%258d%25e5%25ae%259e%25e4%25bd%2593%25e8%25af%2586%25e5%2588%25ab%25e9%2599%2584tensorflow%25e4%25bb%25a3%25e7%25a0%2581-ner%25e7%25b3%25bb%25e5%2588%2597%25ef%25bc%2588%25e5%259b%259b%2F">
+<link rel="alternate" type="text/xml+oembed" href="https://www.lookfor404.com/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fwww.lookfor404.com%2F%25e7%2594%25a8%25e5%258f%258c%25e5%2590%2591lstmcrf%25e5%2581%259a%25e5%2591%25bd%25e5%2590%258d%25e5%25ae%259e%25e4%25bd%2593%25e8%25af%2586%25e5%2588%25ab%25e9%2599%2584tensorflow%25e4%25bb%25a3%25e7%25a0%2581-ner%25e7%25b3%25bb%25e5%2588%2597%25ef%25bc%2588%25e5%259b%259b%2F&amp;format=xml">
+<link rel="stylesheet" type="text/css" href="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/shCore.css"><link rel="stylesheet" type="text/css" href="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/shThemeDefault.css"><style type="text/css" id="syntaxhighlighteranchor"></style>
+</head>
+
+<body class="post-template-default single single-post postid-641 single-format-standard" style="">
+<div id="page" class="hfeed site">
+	<a class="skip-link screen-reader-text" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/#content">跳至内容</a>
+
+	<div id="sidebar" class="sidebar" style="position: fixed;">
+		<header id="masthead" class="site-header" role="banner">
+			<div class="site-branding">
+										<p class="site-title"><a href="https://www.lookfor404.com/" rel="home">找不到的博客</a></p>
+											<p class="site-description">李鹏飞在这里写字</p>
+									<button class="secondary-toggle">菜单和挂件</button>
+			</div><!-- .site-branding -->
+		</header><!-- .site-header -->
+
+			<div id="secondary" class="secondary">
+
+					<nav id="site-navigation" class="main-navigation" role="navigation">
+				<div class="menu-%e6%88%91%e7%9a%84%e8%8f%9c%e5%8d%95-container"><ul id="menu-%e6%88%91%e7%9a%84%e8%8f%9c%e5%8d%95" class="nav-menu"><li id="menu-item-5" class="menu-item menu-item-type-taxonomy menu-item-object-category current-post-ancestor menu-item-has-children menu-item-5"><a href="https://www.lookfor404.com/category/note/">技术笔记</a><button class="dropdown-toggle" aria-expanded="false"><span class="screen-reader-text">展开子菜单</span></button>
+<ul class="sub-menu">
+	<li id="menu-item-367" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-367"><a href="https://www.lookfor404.com/category/note/%e8%87%aa%e7%84%b6%e8%af%ad%e8%a8%80%e5%a4%84%e7%90%86/">自然语言处理</a></li>
+	<li id="menu-item-629" class="menu-item menu-item-type-taxonomy menu-item-object-category current-post-ancestor current-menu-parent current-post-parent menu-item-629"><a href="https://www.lookfor404.com/category/note/%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab/">命名实体识别</a></li>
+	<li id="menu-item-366" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-366"><a href="https://www.lookfor404.com/category/note/%e6%9c%ba%e5%99%a8%e5%ad%a6%e4%b9%a0/">机器学习</a></li>
+	<li id="menu-item-442" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-442"><a href="https://www.lookfor404.com/category/note/%e6%b7%b1%e5%ba%a6%e5%ad%a6%e4%b9%a0/">深度学习</a></li>
+	<li id="menu-item-632" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-632"><a href="https://www.lookfor404.com/category/note/big-data/">大数据</a></li>
+	<li id="menu-item-331" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-331"><a href="https://www.lookfor404.com/category/note/linux/">linux</a></li>
+	<li id="menu-item-8" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-8"><a href="https://www.lookfor404.com/category/note/web/">web开发</a></li>
+	<li id="menu-item-630" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-630"><a href="https://www.lookfor404.com/category/note/fed/">前端</a></li>
+	<li id="menu-item-631" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-631"><a href="https://www.lookfor404.com/category/note/%e5%90%8e%e5%8f%b0/">后台</a></li>
+	<li id="menu-item-37" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-37"><a href="https://www.lookfor404.com/category/note/wordpress/">wordpress</a></li>
+	<li id="menu-item-266" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-266"><a href="https://www.lookfor404.com/category/note/python/">python</a></li>
+	<li id="menu-item-23" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-23"><a href="https://www.lookfor404.com/category/note/java/">java</a></li>
+</ul>
+</li>
+<li id="menu-item-7" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-7"><a href="https://www.lookfor404.com/category/life/">生活</a></li>
+</ul></div>			</nav><!-- .main-navigation -->
+		
+		
+					<div id="widget-area" class="widget-area" role="complementary">
+				<aside id="search-3" class="widget widget_search"><form role="search" method="get" class="search-form" action="https://www.lookfor404.com/">
+				<label>
+					<span class="screen-reader-text">搜索：</span>
+					<input type="search" class="search-field" placeholder="搜索…" value="" name="s">
+				</label>
+				<input type="submit" class="search-submit screen-reader-text" value="搜索">
+			</form></aside>			</div><!-- .widget-area -->
+		
+	</div><!-- .secondary -->
+
+	</div><!-- .sidebar -->
+
+	<div id="content" class="site-content">
+
+	<div id="primary" class="content-area">
+		<main id="main" class="site-main" role="main">
+
+		
+<article id="post-641" class="post-641 post type-post status-publish format-standard hentry category-62">
+	
+	<header class="entry-header">
+		<h1 class="entry-title">用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四）</h1>	</header><!-- .entry-header -->
+
+	<div class="entry-content">
+		<p><br>这一篇文章，主要讲一下用深度学习（神经网络）的方法来做命名实体识别。现在最主流最有效的方法基本上就是lstm+CRF了。其中CRF部分，只是把转移矩阵加进来了而已，而其它特征的提取则是交由神经网络来完成。当然了，特征提取这一部分我们也可以使用CNN，或者加入一些attention机制。</p>
+<p>接下来，我将参考国外的一篇博客《<a href="https://guillaumegenthial.github.io/sequence-tagging-with-tensorflow.html" target="_blank" rel="noopener">Sequence Tagging with Tensorflow</a>》，结合<a href="https://github.com/guillaumegenthial/sequence_tagging" target="_blank" rel="noopener">tensorflow的代码</a>，讲一下用双向lstm+CRF做命名实体识别。</p>
+<hr>
+<h2>1.命名实体识别简述</h2>
+<p>命名实体识别任务本质上就是序列标注任务。来一个例子：</p>
+<pre><code>John  lives in New   York  and works for the European Union
+B-PER O     O  B-LOC I-LOC O   O     O   O   B-ORG    I-ORG</code></pre>
+<p>在CoNLL2003任务中，实体为LOC,PER,ORG和MISC，分别代表着地名，人名，机构名以及其他实体，其它词语会被标记为O。由于有一些实体（比如New York）由多个词组成，所以我们使用用一种简单的标签体系：</p>
+<blockquote>
+<p>B-来标记实体的开始部分，I-来标记实体的其它部分。</p>
+</blockquote>
+<p>我们最终只是想对句子里面的每一个词，分配一个标签。</p>
+<h2>2.模型</h2>
+<p>整个模型的主要组成部分就是<a href="https://www.lookfor404.com/rnn%e6%95%99%e7%a8%8b1-rnn%e7%9a%84%e5%9f%ba%e6%9c%ac%e4%bb%8b%e7%bb%8d/" target="_blank" rel="noopener">RNN</a>。我们将模型的讲解分为以下三个部分：</p>
+<blockquote>
+<ol>
+<li>词向量表示</li>
+<li>词的上下文信息表示</li>
+<li>解码</li>
+</ol>
+</blockquote>
+<h3>2.1 词向量表示</h3>
+<p>对于每一个单词，我们用词向量<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-7123735feac4d367f365dae835182466_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="w \in \mathbb{R}^n" title="Rendered by QuickLaTeX.com" height="13" width="56" style="vertical-align: -1px;">来表示，用来捕获词本身的信息。这个词向量由两部分concat起来，一部分是用GloVe训练出来的词向量<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-8e710aa297ac912a8fe618794d294649_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="w_{glove} \in \mathbb{R}^{d_1}" title="Rendered by QuickLaTeX.com" height="21" width="92" style="vertical-align: -6px;">，另一部分，是字符级别的向量<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-6d30b5b3c46141e7352877c32eb426f7_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="w_{chars} \in \mathbb{R}^{d_2}" title="Rendered by QuickLaTeX.com" height="18" width="95" style="vertical-align: -3px;">。</p>
+<p>在以往，我们会手工提取并表示一些特征，比如用1，0来表示某个单词是否是大写开头，而在这个模型里面，我们不需要人工提取特征，只需要字符级别上面使用双向LSTM，就可以提取到一些拼写层面的特征了。当然了，CNN或者其他的RNN也可以干类似的事情。</p>
+<p><a href="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/Word-level-representation-from-characters-embeddings.jpg"><img class="aligncenter wp-image-645 size-full" title="Word level representation from characters embeddings" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/Word-level-representation-from-characters-embeddings.jpg" alt="Word level representation from characters embeddings" width="503" height="534" srcset="https://www.lookfor404.com/wp-content/uploads/2018/02/Word-level-representation-from-characters-embeddings.jpg 503w, https://www.lookfor404.com/wp-content/uploads/2018/02/Word-level-representation-from-characters-embeddings-283x300.jpg 283w" sizes="(max-width: 503px) 100vw, 503px"></a></p>
+<p>对于每一个单词<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-7559e0898757e14cc865bbe19d8b827a_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="w = [c_1, \ldots, c_p]" title="Rendered by QuickLaTeX.com" height="19" width="115" style="vertical-align: -6px;">里面的每一个字母（区分大小写），我们用<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-5876e634788311e95876a828a189e9cb_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="c_i \in \mathbb{R}^{d_3}" title="Rendered by QuickLaTeX.com" height="18" width="61" style="vertical-align: -3px;">这个向量来表示，对字母级别的embedding跑一个bi-LSTM，然后将最后的隐状态输出拼接起来（因为是双向，所以有两个最后隐状态，如上图），得到一个固定长度的表达<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-6d30b5b3c46141e7352877c32eb426f7_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="w_{chars} \in \mathbb{R}^{d_2}" title="Rendered by QuickLaTeX.com" height="18" width="95" style="vertical-align: -3px;">，直觉上，我们可以认为这个向量提取了字母级别的特征，比如大小写、拼写规律等等。然后，我们将这个向量<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-f57612eaaf07f3c6d743b9483b8aef0f_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="w_{chars}" title="Rendered by QuickLaTeX.com" height="11" width="46" style="vertical-align: -3px;">和Glove训练好的w_{glove}拼接起来，得到某个词最终的词向量表达：<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-fa9315d0afaa848d010d81a171f2bf0a_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="w = [w_{glove}, w_{chars}] \in \mathbb{R}^n" title="Rendered by QuickLaTeX.com" height="19" width="190" style="vertical-align: -6px;">，其中<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-2609d6cfc81a550ddd3e5ff4dc0d0d1f_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="n = d_1 + d_2" title="Rendered by QuickLaTeX.com" height="17" width="89" style="vertical-align: -4px;">。</p>
+<p>看一下tensorflow对应的实现代码。</p>
+<pre><div><div id="highlighter_71276" class="syntaxhighlighter  python"><table border="0" cellpadding="0" cellspacing="0"><tbody><tr><td class="gutter"><div class="line number1 index0 alt2">1</div><div class="line number2 index1 alt1">2</div><div class="line number3 index2 alt2">3</div><div class="line number4 index3 alt1">4</div><div class="line number5 index4 alt2">5</div></td><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="python comments"># shape = (batch size, max length of sentence in batch)</code></div><div class="line number2 index1 alt1"><code class="python plain">word_ids </code><code class="python keyword">=</code> <code class="python plain">tf.placeholder(tf.int32, shape</code><code class="python keyword">=</code><code class="python plain">[</code><code class="python color1">None</code><code class="python plain">, </code><code class="python color1">None</code><code class="python plain">])</code></div><div class="line number3 index2 alt2">&nbsp;</div><div class="line number4 index3 alt1"><code class="python comments"># shape = (batch size)</code></div><div class="line number5 index4 alt2"><code class="python plain">sequence_lengths </code><code class="python keyword">=</code> <code class="python plain">tf.placeholder(tf.int32, shape</code><code class="python keyword">=</code><code class="python plain">[</code><code class="python color1">None</code><code class="python plain">])</code></div></div></td></tr></tbody></table></div></div></pre>
+<p>好了，让我们用tensorflow的内置函数来读取word embeddings。假设这个<code>embeddings</code>是一个由GloVe训练出来的numpy数组，那么<code>embeddings[i]</code>表示第i个词的向量表示。</p>
+<pre><div><div id="highlighter_810587" class="syntaxhighlighter  python"><table border="0" cellpadding="0" cellspacing="0"><tbody><tr><td class="gutter"><div class="line number1 index0 alt2">1</div><div class="line number2 index1 alt1">2</div><div class="line number3 index2 alt2">3</div></td><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="python plain">L </code><code class="python keyword">=</code> <code class="python plain">tf.Variable(embeddings, dtype</code><code class="python keyword">=</code><code class="python plain">tf.float32, trainable</code><code class="python keyword">=</code><code class="python color1">False</code><code class="python plain">)</code></div><div class="line number2 index1 alt1"><code class="python comments"># shape = (batch, sentence, word_vector_size)</code></div><div class="line number3 index2 alt2"><code class="python plain">pretrained_embeddings </code><code class="python keyword">=</code> <code class="python plain">tf.nn.embedding_lookup(L, word_ids)</code></div></div></td></tr></tbody></table></div></div></pre>
+<p>在这里，应该使用<code>tf.Variable</code>并且参数设置<code>trainable=False</code>，而不是用<code>tf.constant</code>，否则可能会面临内存问题。</p>
+<p>好，接下来，让我们来对字母建立向量。</p>
+<pre><div><div id="highlighter_124548" class="syntaxhighlighter  python"><table border="0" cellpadding="0" cellspacing="0"><tbody><tr><td class="gutter"><div class="line number1 index0 alt2">1</div><div class="line number2 index1 alt1">2</div><div class="line number3 index2 alt2">3</div><div class="line number4 index3 alt1">4</div><div class="line number5 index4 alt2">5</div></td><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="python comments"># shape = (batch size, max length of sentence, max length of word)</code></div><div class="line number2 index1 alt1"><code class="python plain">char_ids </code><code class="python keyword">=</code> <code class="python plain">tf.placeholder(tf.int32, shape</code><code class="python keyword">=</code><code class="python plain">[</code><code class="python color1">None</code><code class="python plain">, </code><code class="python color1">None</code><code class="python plain">, </code><code class="python color1">None</code><code class="python plain">])</code></div><div class="line number3 index2 alt2">&nbsp;</div><div class="line number4 index3 alt1"><code class="python comments"># shape = (batch_size, max_length of sentence)</code></div><div class="line number5 index4 alt2"><code class="python plain">word_lengths </code><code class="python keyword">=</code> <code class="python plain">tf.placeholder(tf.int32, shape</code><code class="python keyword">=</code><code class="python plain">[</code><code class="python color1">None</code><code class="python plain">, </code><code class="python color1">None</code><code class="python plain">])</code></div></div></td></tr></tbody></table></div></div></pre>
+<p>为什么这里用这么多<code>None</code>呢？</p>
+<p>其实这取决于我们。在我们的代码实现中，我们的padding是动态的，也就是和batch的最大长度对齐。因此，句子长度和单词长度取决于batch。</p>
+<p>好了，继续。在这里，我们没有任何预训练的字母向量，所以我们调用<code>tf.get_variable</code>来初始化它们。我们也要reshape一下四维的tensor，以符合<code>bidirectional_dynamic_rnn</code>的所需要的输入。代码如下：</p>
+<pre><div><div id="highlighter_44661" class="syntaxhighlighter  python"><table border="0" cellpadding="0" cellspacing="0"><tbody><tr><td class="gutter"><div class="line number1 index0 alt2">1</div><div class="line number2 index1 alt1">2</div><div class="line number3 index2 alt2">3</div><div class="line number4 index3 alt1">4</div><div class="line number5 index4 alt2">5</div><div class="line number6 index5 alt1">6</div><div class="line number7 index6 alt2">7</div><div class="line number8 index7 alt1">8</div><div class="line number9 index8 alt2">9</div><div class="line number10 index9 alt1">10</div><div class="line number11 index10 alt2">11</div><div class="line number12 index11 alt1">12</div><div class="line number13 index12 alt2">13</div><div class="line number14 index13 alt1">14</div><div class="line number15 index14 alt2">15</div><div class="line number16 index15 alt1">16</div><div class="line number17 index16 alt2">17</div><div class="line number18 index17 alt1">18</div><div class="line number19 index18 alt2">19</div><div class="line number20 index19 alt1">20</div><div class="line number21 index20 alt2">21</div><div class="line number22 index21 alt1">22</div><div class="line number23 index22 alt2">23</div><div class="line number24 index23 alt1">24</div><div class="line number25 index24 alt2">25</div><div class="line number26 index25 alt1">26</div><div class="line number27 index26 alt2">27</div></td><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="python comments"># 1. get character embeddings</code></div><div class="line number2 index1 alt1"><code class="python plain">K </code><code class="python keyword">=</code> <code class="python plain">tf.get_variable(name</code><code class="python keyword">=</code><code class="python string">"char_embeddings"</code><code class="python plain">, dtype</code><code class="python keyword">=</code><code class="python plain">tf.float32,</code></div><div class="line number3 index2 alt2"><code class="python spaces">&nbsp;&nbsp;&nbsp;&nbsp;</code><code class="python plain">shape</code><code class="python keyword">=</code><code class="python plain">[nchars, dim_char])</code></div><div class="line number4 index3 alt1"><code class="python comments"># shape = (batch, sentence, word, dim of char embeddings)</code></div><div class="line number5 index4 alt2"><code class="python plain">char_embeddings </code><code class="python keyword">=</code> <code class="python plain">tf.nn.embedding_lookup(K, char_ids)</code></div><div class="line number6 index5 alt1">&nbsp;</div><div class="line number7 index6 alt2"><code class="python comments"># 2. put the time dimension on axis=1 for dynamic_rnn</code></div><div class="line number8 index7 alt1"><code class="python plain">s </code><code class="python keyword">=</code> <code class="python plain">tf.shape(char_embeddings) </code><code class="python comments"># store old shape</code></div><div class="line number9 index8 alt2"><code class="python comments"># shape = (batch x sentence, word, dim of char embeddings)</code></div><div class="line number10 index9 alt1"><code class="python plain">char_embeddings </code><code class="python keyword">=</code> <code class="python plain">tf.reshape(char_embeddings, shape</code><code class="python keyword">=</code><code class="python plain">[</code><code class="python keyword">-</code><code class="python value">1</code><code class="python plain">, s[</code><code class="python keyword">-</code><code class="python value">2</code><code class="python plain">], s[</code><code class="python keyword">-</code><code class="python value">1</code><code class="python plain">]])</code></div><div class="line number11 index10 alt2"><code class="python plain">word_lengths </code><code class="python keyword">=</code> <code class="python plain">tf.reshape(</code><code class="python color1">self</code><code class="python plain">.word_lengths, shape</code><code class="python keyword">=</code><code class="python plain">[</code><code class="python keyword">-</code><code class="python value">1</code><code class="python plain">])</code></div><div class="line number12 index11 alt1">&nbsp;</div><div class="line number13 index12 alt2"><code class="python comments"># 3. bi lstm on chars</code></div><div class="line number14 index13 alt1"><code class="python plain">cell_fw </code><code class="python keyword">=</code> <code class="python plain">tf.contrib.rnn.LSTMCell(char_hidden_size, state_is_tuple</code><code class="python keyword">=</code><code class="python color1">True</code><code class="python plain">)</code></div><div class="line number15 index14 alt2"><code class="python plain">cell_bw </code><code class="python keyword">=</code> <code class="python plain">tf.contrib.rnn.LSTMCell(char_hidden_size, state_is_tuple</code><code class="python keyword">=</code><code class="python color1">True</code><code class="python plain">)</code></div><div class="line number16 index15 alt1">&nbsp;</div><div class="line number17 index16 alt2"><code class="python plain">_, ((_, output_fw), (_, output_bw)) </code><code class="python keyword">=</code> <code class="python plain">tf.nn.bidirectional_dynamic_rnn(cell_fw,</code></div><div class="line number18 index17 alt1"><code class="python spaces">&nbsp;&nbsp;&nbsp;&nbsp;</code><code class="python plain">cell_bw, char_embeddings, sequence_length</code><code class="python keyword">=</code><code class="python plain">word_lengths,</code></div><div class="line number19 index18 alt2"><code class="python spaces">&nbsp;&nbsp;&nbsp;&nbsp;</code><code class="python plain">dtype</code><code class="python keyword">=</code><code class="python plain">tf.float32)</code></div><div class="line number20 index19 alt1"><code class="python comments"># shape = (batch x sentence, 2 x char_hidden_size)</code></div><div class="line number21 index20 alt2"><code class="python plain">output </code><code class="python keyword">=</code> <code class="python plain">tf.concat([output_fw, output_bw], axis</code><code class="python keyword">=</code><code class="python keyword">-</code><code class="python value">1</code><code class="python plain">)</code></div><div class="line number22 index21 alt1">&nbsp;</div><div class="line number23 index22 alt2"><code class="python comments"># shape = (batch, sentence, 2 x char_hidden_size)</code></div><div class="line number24 index23 alt1"><code class="python plain">char_rep </code><code class="python keyword">=</code> <code class="python plain">tf.reshape(output, shape</code><code class="python keyword">=</code><code class="python plain">[</code><code class="python keyword">-</code><code class="python value">1</code><code class="python plain">, s[</code><code class="python value">1</code><code class="python plain">], </code><code class="python value">2</code><code class="python keyword">*</code><code class="python plain">char_hidden_size])</code></div><div class="line number25 index24 alt2">&nbsp;</div><div class="line number26 index25 alt1"><code class="python comments"># shape = (batch, sentence, 2 x char_hidden_size + word_vector_size)</code></div><div class="line number27 index26 alt2"><code class="python plain">word_embeddings </code><code class="python keyword">=</code> <code class="python plain">tf.concat([pretrained_embeddings, char_rep], axis</code><code class="python keyword">=</code><code class="python keyword">-</code><code class="python value">1</code><code class="python plain">)</code></div></div></td></tr></tbody></table></div></div></pre>
+<blockquote>
+<p>注意<code>sequence_length</code>这个参数的用法，它让我们可以得到最后一个有效的state，对于无效的time steps，<code>dynamic_rnn</code>直接穿过这个state，返回零向量。</p>
+</blockquote>
+<h3>2.2 词的上下文信息表示</h3>
+<p>当有了词向量<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-dfee5c980777976ae8cf6541893fb572_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="w" title="Rendered by QuickLaTeX.com" height="8" width="13" style="vertical-align: 0px;">之后，就可以对一个句子里的每一个词跑LSTM或者双向LSTM了，然后得到另一个向量表示：<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-e2d4bbfe8fb2e4f5bd7b08acba5a92b3_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="h \in \mathbb{R}^k" title="Rendered by QuickLaTeX.com" height="16" width="52" style="vertical-align: -1px;">，如下图：<br><a href="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/利用双向LSTM提取上下文信息.jpg"><img class="aligncenter wp-image-647 size-full" title="利用双向LSTM提取上下文信息" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/利用双向LSTM提取上下文信息.jpg" alt="利用双向LSTM提取上下文信息" width="512" height="570" srcset="https://www.lookfor404.com/wp-content/uploads/2018/02/利用双向LSTM提取上下文信息.jpg 512w, https://www.lookfor404.com/wp-content/uploads/2018/02/利用双向LSTM提取上下文信息-269x300.jpg 269w" sizes="(max-width: 512px) 100vw, 512px"></a></p>
+<p>对应的tensorflow代码很直观，这次我们用每一个隐藏层的输出，而不是最后一个单元的输出。因此，我们输入一个句子，有m个单词：<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-df7bccd6860b2e19aae87946f84772b0_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="w_1, \ldots, w_m \in \mathbb{R}^n" title="Rendered by QuickLaTeX.com" height="16" width="128" style="vertical-align: -4px;">，得到m个输出：<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-20bc9dfb6fb5e76e13ddc215be9ed622_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="h_1, \ldots, h_m \in \mathbb{R}^k" title="Rendered by QuickLaTeX.com" height="19" width="122" style="vertical-align: -4px;">。现在的输出，是包含上下文信息的：</p>
+<pre><div><div id="highlighter_994074" class="syntaxhighlighter  python"><table border="0" cellpadding="0" cellspacing="0"><tbody><tr><td class="gutter"><div class="line number1 index0 alt2">1</div><div class="line number2 index1 alt1">2</div><div class="line number3 index2 alt2">3</div><div class="line number4 index3 alt1">4</div><div class="line number5 index4 alt2">5</div><div class="line number6 index5 alt1">6</div><div class="line number7 index6 alt2">7</div><div class="line number8 index7 alt1">8</div></td><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="python plain">cell_fw </code><code class="python keyword">=</code> <code class="python plain">tf.contrib.rnn.LSTMCell(hidden_size)</code></div><div class="line number2 index1 alt1"><code class="python plain">cell_bw </code><code class="python keyword">=</code> <code class="python plain">tf.contrib.rnn.LSTMCell(hidden_size)</code></div><div class="line number3 index2 alt2">&nbsp;</div><div class="line number4 index3 alt1"><code class="python plain">(output_fw, output_bw), _ </code><code class="python keyword">=</code> <code class="python plain">tf.nn.bidirectional_dynamic_rnn(cell_fw,</code></div><div class="line number5 index4 alt2"><code class="python spaces">&nbsp;&nbsp;&nbsp;&nbsp;</code><code class="python plain">cell_bw, word_embeddings, sequence_length</code><code class="python keyword">=</code><code class="python plain">sequence_lengths,</code></div><div class="line number6 index5 alt1"><code class="python spaces">&nbsp;&nbsp;&nbsp;&nbsp;</code><code class="python plain">dtype</code><code class="python keyword">=</code><code class="python plain">tf.float32)</code></div><div class="line number7 index6 alt2">&nbsp;</div><div class="line number8 index7 alt1"><code class="python plain">context_rep </code><code class="python keyword">=</code> <code class="python plain">tf.concat([output_fw, output_bw], axis</code><code class="python keyword">=</code><code class="python keyword">-</code><code class="python value">1</code><code class="python plain">)</code></div></div></td></tr></tbody></table></div></div></pre>
+<h3>2.3 解码</h3>
+<p>最后，我们要对每一个词分配一个tag。用一个全连接层就可以搞定。</p>
+<p>假如，一共有9种tag，那么我们可以得到权重矩阵<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-d1f21ef6ddecc7ad889f93b34e42ee4f_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="W \in \mathbb{R}^{9 \times k}" title="Rendered by QuickLaTeX.com" height="16" width="79" style="vertical-align: -1px;">和偏置矩阵<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-e7b9760b279fbdb658cbf984cd379c82_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="b \in \mathbb{R}^9" title="Rendered by QuickLaTeX.com" height="16" width="49" style="vertical-align: -1px;">，最后计算某个词的得分向量<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-1161378bff74b2962962dba68ef4c7af_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="s \in \mathbb{R}^9 = W \cdot h + b" title="Rendered by QuickLaTeX.com" height="17" width="146" style="vertical-align: -2px;">,<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-32cb48f81effa33197a00874d2826041_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="s[i]" title="Rendered by QuickLaTeX.com" height="18" width="22" style="vertical-align: -5px;">可以解释为，某个词标记成第<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-695d9d59bd04859c6c99e7feb11daab6_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="i" title="Rendered by QuickLaTeX.com" height="12" width="6" style="vertical-align: 0px;">个tag的得分，tensorflow的实现是这样的：</p>
+<pre><div><div id="highlighter_991591" class="syntaxhighlighter  python"><table border="0" cellpadding="0" cellspacing="0"><tbody><tr><td class="gutter"><div class="line number1 index0 alt2">1</div><div class="line number2 index1 alt1">2</div><div class="line number3 index2 alt2">3</div><div class="line number4 index3 alt1">4</div><div class="line number5 index4 alt2">5</div><div class="line number6 index5 alt1">6</div><div class="line number7 index6 alt2">7</div><div class="line number8 index7 alt1">8</div><div class="line number9 index8 alt2">9</div><div class="line number10 index9 alt1">10</div></td><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="python plain">W </code><code class="python keyword">=</code> <code class="python plain">tf.get_variable(</code><code class="python string">"W"</code><code class="python plain">, shape</code><code class="python keyword">=</code><code class="python plain">[</code><code class="python value">2</code><code class="python keyword">*</code><code class="python color1">self</code><code class="python plain">.config.hidden_size, </code><code class="python color1">self</code><code class="python plain">.config.ntags],</code></div><div class="line number2 index1 alt1"><code class="python spaces">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code><code class="python plain">dtype</code><code class="python keyword">=</code><code class="python plain">tf.float32)</code></div><div class="line number3 index2 alt2">&nbsp;</div><div class="line number4 index3 alt1"><code class="python plain">b </code><code class="python keyword">=</code> <code class="python plain">tf.get_variable(</code><code class="python string">"b"</code><code class="python plain">, shape</code><code class="python keyword">=</code><code class="python plain">[</code><code class="python color1">self</code><code class="python plain">.config.ntags], dtype</code><code class="python keyword">=</code><code class="python plain">tf.float32,</code></div><div class="line number5 index4 alt2"><code class="python spaces">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code><code class="python plain">initializer</code><code class="python keyword">=</code><code class="python plain">tf.zeros_initializer())</code></div><div class="line number6 index5 alt1">&nbsp;</div><div class="line number7 index6 alt2"><code class="python plain">ntime_steps </code><code class="python keyword">=</code> <code class="python plain">tf.shape(context_rep)[</code><code class="python value">1</code><code class="python plain">]</code></div><div class="line number8 index7 alt1"><code class="python plain">context_rep_flat </code><code class="python keyword">=</code> <code class="python plain">tf.reshape(context_rep, [</code><code class="python keyword">-</code><code class="python value">1</code><code class="python plain">, </code><code class="python value">2</code><code class="python keyword">*</code><code class="python plain">hidden_size])</code></div><div class="line number9 index8 alt2"><code class="python plain">pred </code><code class="python keyword">=</code> <code class="python plain">tf.matmul(context_rep_flat, W) </code><code class="python keyword">+</code> <code class="python plain">b</code></div><div class="line number10 index9 alt1"><code class="python plain">scores </code><code class="python keyword">=</code> <code class="python plain">tf.reshape(pred, [</code><code class="python keyword">-</code><code class="python value">1</code><code class="python plain">, ntime_steps, ntags])</code></div></div></td></tr></tbody></table></div></div></pre>
+<blockquote>
+<p>在这里，我们用<code>zero_initializer</code>来初始化偏置。</p>
+</blockquote>
+<p>有了分数之后，我们有两种方案用来计算最后的tag：</p>
+<ul>
+<li>softmax：将得分归一化为概率。</li>
+<li>线性CRF：第一种方案softmax，只做了局部的考虑，也就是说，当前词的tag，是不受其它的tag的影响的。而事实上，当前词tag是受相邻词tag的影响的。定义一系列词<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-6947915efb1941365bd38a826501e374_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="w_1, \ldots, w_m" title="Rendered by QuickLaTeX.com" height="12" width="85" style="vertical-align: -4px;">，一系列的得分向量<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-c5e4e32bc21dc80a5e9ad5d401bd90be_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="s_1, \ldots, s_m" title="Rendered by QuickLaTeX.com" height="12" width="75" style="vertical-align: -4px;">，还有一系列标签<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-4dae0d505830603b02478809070bbb8d_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="y_1, \ldots, y_m" title="Rendered by QuickLaTeX.com" height="12" width="77" style="vertical-align: -4px;">，线性CRF的计算公式是这样的：</li>
+</ul>
+<p></p><p class="ql-center-displayed-equation" style="line-height: 79px;"><span class="ql-right-eqno"> &nbsp; </span><span class="ql-left-eqno"> &nbsp; </span><img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-d0fb542ccdf36647a4f115d378d8c306_l3.svg" height="79" width="473" class="ql-img-displayed-equation quicklatex-auto-format" alt="\[\begin{aligned}C(y_1, \ldots, y_m) &amp;= b[y_1] &amp;+ \sum_{t=1}^{m} s_t [y_t] &amp;+ \sum_{t=1}^{m-1} T[y_{t}, y_{t+1}] &amp;+ e[y_m]\\&amp;= \text{begin} &amp;+ \text{scores} &amp;+ \text{transitions} &amp;+ \text{end}\end{aligned}\]" title="Rendered by QuickLaTeX.com"></p><p></p>
+<p>在上面的式子里，<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-f9ed275b0bf1633b7ee83b78fcc28273_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="T" title="Rendered by QuickLaTeX.com" height="12" width="13" style="vertical-align: 0px;">是转移矩阵，尺寸为<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-7db943350e6eb63d6aa265ec5be266be_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="\mathbb{R}^{9 \times 9}" title="Rendered by QuickLaTeX.com" height="15" width="38" style="vertical-align: 0px;">，用来刻画相邻tag的依赖、转移关系；<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-1e7dbe6e65312403b4917d247ab2c719_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="e, b \in \mathbb{R}^9" title="Rendered by QuickLaTeX.com" height="19" width="65" style="vertical-align: -4px;">是结束、开始tag的代价向量。下面是一个计算例子：<a href="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/转移得分计算例子.jpg"><img class="aligncenter wp-image-657 size-full" title="转移得分计算例子" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/转移得分计算例子.jpg" alt="转移得分计算例子" width="747" height="190" srcset="https://www.lookfor404.com/wp-content/uploads/2018/02/转移得分计算例子.jpg 747w, https://www.lookfor404.com/wp-content/uploads/2018/02/转移得分计算例子-300x76.jpg 300w" sizes="(max-width: 747px) 100vw, 747px"></a></p>
+<p>了解了CRF得分式子，接下来要做两件事：</p>
+<ul>
+<li>找到得分最高的tag序列。</li>
+<li>计算句子的tag概率分布。</li>
+</ul>
+<blockquote>
+<p>“仔细想想，计算量是不是太大了？”</p>
+</blockquote>
+<p>没错，计算量相当大。就上面的例子而言，有9种tag，一个句子有m个单词，一共有<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-bdf9e8c60c57d7cde800f11611bffa25_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="9^m" title="Rendered by QuickLaTeX.com" height="12" width="21" style="vertical-align: 0px;">种可能，代价太大了。</p>
+<p>幸运的是，由于式子有递归的特性，所以我们可以用动态规划的思想来解决这个问题。假设<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-87afd4f89cd4fbbccc7506841056bb65_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="\tilde{s}_{t+1} (y^{t+1})" title="Rendered by QuickLaTeX.com" height="20" width="77" style="vertical-align: -5px;">是时间步<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-128ffd05aab04935c8443e94e279ccab_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="t+1, \ldots, m" title="Rendered by QuickLaTeX.com" height="16" width="91" style="vertical-align: -4px;">的解（每个时间步都是有9种可能的），那么，继续往前推，时间步<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-cac1c0d088abeb927a7ecb9c61b2765c_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="t, \ldots, m" title="Rendered by QuickLaTeX.com" height="16" width="61" style="vertical-align: -4px;">的解，可以由下式表示：<br></p><p class="ql-center-displayed-equation" style="line-height: 51px;"><span class="ql-right-eqno"> &nbsp; </span><span class="ql-left-eqno"> &nbsp; </span><img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-c13eb6c5b30757b2ccbe503a9ab1e609_l3.svg" height="51" width="391" class="ql-img-displayed-equation quicklatex-auto-format" alt="\[\begin{aligned}\tilde{s}_t(y_t) &amp;= \operatorname{argmax}_{y_t, \ldots, y_m} C(y_t, \ldots, y_m)\\&amp;= \operatorname{argmax}_{y_{t+1}} s_t [y_t] + T[y_{t}, y_{t+1}] + \tilde{s}_{t+1}(y^{t+1})\end{aligned}\]" title="Rendered by QuickLaTeX.com"></p><p></p>
+<p>每一个递归步骤的复杂度为<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-7ed70c73795c1e0b276896c1af867c61_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="O(9 \times 9)" title="Rendered by QuickLaTeX.com" height="18" width="66" style="vertical-align: -4px;">，由于我们进行了<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-6b41df788161942c6f98604d37de8098_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="m" title="Rendered by QuickLaTeX.com" height="8" width="15" style="vertical-align: 0px;">步，所以总的复杂度是<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-4b41b5787ff0a250c3066b3ce3e73074_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="O(9 \times 9 \times m)" title="Rendered by QuickLaTeX.com" height="18" width="104" style="vertical-align: -4px;">。</p>
+<p>最后，我们需要在CRF层应用softmax，将得分概率分布计算出来。我们得计算出所有的可能，如下式子：</p>
+<p></p><p class="ql-center-displayed-equation" style="line-height: 41px;"><span class="ql-right-eqno"> &nbsp; </span><span class="ql-left-eqno"> &nbsp; </span><img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-cb6015af097c676e348ffb4665decc75_l3.svg" height="41" width="169" class="ql-img-displayed-equation quicklatex-auto-format" alt="\[\begin{aligned}Z = \sum_{y_1, \ldots, y_m} e^{C(y_1, \ldots, y_m)}\end{aligned}\]" title="Rendered by QuickLaTeX.com"></p><p></p>
+<p>上面提到的递归思想在这里也可以应用。先定义<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-66af5b630822fc60a267745b50bd17f2_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="Z_t(y_t)" title="Rendered by QuickLaTeX.com" height="18" width="44" style="vertical-align: -4px;">，表示从时间步<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-b4e3cbf5d4c5c6d9b702dd139f14c147_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="t" title="Rendered by QuickLaTeX.com" height="12" width="6" style="vertical-align: 0px;">开始、以<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-015427e98fffb41b88d041f4cb86a3ef_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="y_t" title="Rendered by QuickLaTeX.com" height="12" width="14" style="vertical-align: -4px;">为tag开始的序列，计算公式如下：</p>
+<p></p><p class="ql-center-displayed-equation" style="line-height: 143px;"><span class="ql-right-eqno"> &nbsp; </span><span class="ql-left-eqno"> &nbsp; </span><img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-02a6eb62ee56a6030d8c8fd1a49a0bc9_l3.svg" height="143" width="402" class="ql-img-displayed-equation quicklatex-auto-format" alt="\[\begin{aligned}Z_t(y_t) &amp;= \sum_{y_{t+1}} e^{s_t[y_t] + T[y_{t}, y_{t+1}]} \sum_{y_{t+2}, \ldots, y_m} e^{C(y_{t+1}, \ldots, y_m)} \\&amp;= \sum_{y_{t+1}} e^{s_t[y_t] + T[y_{t}, y_{t+1}]} \ Z_{t+1}(y_{t+1})\\\log Z_t(y_t) &amp;= \log \sum_{y_{t+1}} e^{s_t [y_t] + T[y_{t}, y_{t+1}] + \log Z_{t+1}(y_{t+1})}\end{aligned}\]" title="Rendered by QuickLaTeX.com"></p><p></p>
+<p>最后，序列概率计算式子如下：<br></p><p class="ql-center-displayed-equation" style="line-height: 42px;"><span class="ql-right-eqno"> &nbsp; </span><span class="ql-left-eqno"> &nbsp; </span><img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-8dcee04a0c355a26c592ab3d56cf5099_l3.svg" height="42" width="209" class="ql-img-displayed-equation quicklatex-auto-format" alt="\[\begin{aligned}\mathbb{P}(y_1, \ldots, y_m) = \frac{e^{C(y_1, \ldots, y_m)}}{Z}\end{aligned}\]" title="Rendered by QuickLaTeX.com"></p><p></p>
+<h3>2.4 训练</h3>
+<p>最后，就是训练部分了。训练的损失函数采用的是cross-entropy（交叉熵），计算公式如下：<br></p><p class="ql-center-displayed-equation" style="line-height: 18px;"><span class="ql-right-eqno"> &nbsp; </span><span class="ql-left-eqno"> &nbsp; </span><img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-dd4a29d8d2e853b20256a0c3e4e115e8_l3.svg" height="18" width="85" class="ql-img-displayed-equation quicklatex-auto-format" alt="\[\begin{aligned}- \log (\mathbb{P}(\tilde{y}))\end{aligned}\]" title="Rendered by QuickLaTeX.com"></p><p></p>
+<p>其中，<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-8a78cb19ebab504b160029277af40191_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="\tilde{y}" title="Rendered by QuickLaTeX.com" height="16" width="9" style="vertical-align: -4px;">为正确的标注序列，它的概率<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-497225d6738cd17cfd2d6f3c024079d4_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="\mathbb{P}" title="Rendered by QuickLaTeX.com" height="12" width="11" style="vertical-align: 0px;">计算公式如下：</p>
+<ul>
+<li>CRF:<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-ad4d8ea0bfc3464f81367459ead9d64d_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="\mathbb{P}(\tilde{y}) = \frac{e^{C(\tilde{y})}}{Z}" title="Rendered by QuickLaTeX.com" height="25" width="93" style="vertical-align: -6px;"></li>
+<li>local softmax：<img src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/quicklatex.com-50e2874f55bd3b56e2eaf58feb447191_l3.svg" class="ql-img-inline-formula quicklatex-auto-format" alt="\mathbb{P}(\tilde{y}) = \prod p_t[\tilde{y}^t]" title="Rendered by QuickLaTeX.com" height="20" width="115" style="vertical-align: -5px;"></li>
+</ul>
+<blockquote>
+<p>“额..CRF层的损失很难计算吧..?”</p>
+</blockquote>
+<p>没错，但是大神早就帮你做好了。在tensorflow里面，一行就能调用。下面的代码会帮我们计算CRF的loss，同时返回矩阵T，以助我们做预测：</p>
+<pre><div><div id="highlighter_19062" class="syntaxhighlighter  python"><table border="0" cellpadding="0" cellspacing="0"><tbody><tr><td class="gutter"><div class="line number1 index0 alt2">1</div><div class="line number2 index1 alt1">2</div><div class="line number3 index2 alt2">3</div><div class="line number4 index3 alt1">4</div><div class="line number5 index4 alt2">5</div><div class="line number6 index5 alt1">6</div><div class="line number7 index6 alt2">7</div></td><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="python comments"># shape = (batch, sentence)</code></div><div class="line number2 index1 alt1"><code class="python plain">labels </code><code class="python keyword">=</code> <code class="python plain">tf.placeholder(tf.int32, shape</code><code class="python keyword">=</code><code class="python plain">[</code><code class="python color1">None</code><code class="python plain">, </code><code class="python color1">None</code><code class="python plain">], name</code><code class="python keyword">=</code><code class="python string">"labels"</code><code class="python plain">)</code></div><div class="line number3 index2 alt2">&nbsp;</div><div class="line number4 index3 alt1"><code class="python plain">log_likelihood, transition_params </code><code class="python keyword">=</code> <code class="python plain">tf.contrib.crf.crf_log_likelihood(</code></div><div class="line number5 index4 alt2"><code class="python plain">scores, labels, sequence_lengths)</code></div><div class="line number6 index5 alt1">&nbsp;</div><div class="line number7 index6 alt2"><code class="python plain">loss </code><code class="python keyword">=</code> <code class="python plain">tf.reduce_mean(</code><code class="python keyword">-</code><code class="python plain">log_likelihood)</code></div></div></td></tr></tbody></table></div></div></pre>
+<p>local softmax的loss计算过程很经典，但我们需要用<code>tf.sequence_mask</code>将sequence转化为bool向量：</p>
+<pre><div><div id="highlighter_190966" class="syntaxhighlighter  python"><table border="0" cellpadding="0" cellspacing="0"><tbody><tr><td class="gutter"><div class="line number1 index0 alt2">1</div><div class="line number2 index1 alt1">2</div><div class="line number3 index2 alt2">3</div><div class="line number4 index3 alt1">4</div><div class="line number5 index4 alt2">5</div><div class="line number6 index5 alt1">6</div><div class="line number7 index6 alt2">7</div></td><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="python plain">losses </code><code class="python keyword">=</code> <code class="python plain">tf.nn.sparse_softmax_cross_entropy_with_logits(logits</code><code class="python keyword">=</code><code class="python plain">scores, labels</code><code class="python keyword">=</code><code class="python plain">labels)</code></div><div class="line number2 index1 alt1"><code class="python comments"># shape = (batch, sentence, nclasses)</code></div><div class="line number3 index2 alt2"><code class="python plain">mask </code><code class="python keyword">=</code> <code class="python plain">tf.sequence_mask(sequence_lengths)</code></div><div class="line number4 index3 alt1"><code class="python comments"># apply mask</code></div><div class="line number5 index4 alt2"><code class="python plain">losses </code><code class="python keyword">=</code> <code class="python plain">tf.boolean_mask(losses, mask)</code></div><div class="line number6 index5 alt1">&nbsp;</div><div class="line number7 index6 alt2"><code class="python plain">loss </code><code class="python keyword">=</code> <code class="python plain">tf.reduce_mean(losses)</code></div></div></td></tr></tbody></table></div></div></pre>
+<p>最后，定义train op：</p>
+<pre><div><div id="highlighter_750779" class="syntaxhighlighter  python"><table border="0" cellpadding="0" cellspacing="0"><tbody><tr><td class="gutter"><div class="line number1 index0 alt2">1</div><div class="line number2 index1 alt1">2</div></td><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="python plain">optimizer </code><code class="python keyword">=</code> <code class="python plain">tf.train.AdamOptimizer(</code><code class="python color1">self</code><code class="python plain">.lr)</code></div><div class="line number2 index1 alt1"><code class="python plain">train_op </code><code class="python keyword">=</code> <code class="python plain">optimizer.minimize(</code><code class="python color1">self</code><code class="python plain">.loss)</code></div></div></td></tr></tbody></table></div></div></pre>
+<h3>2.5 使用模型</h3>
+<p>最后的预测步骤很直观：</p>
+<pre><div><div id="highlighter_627848" class="syntaxhighlighter  python"><table border="0" cellpadding="0" cellspacing="0"><tbody><tr><td class="gutter"><div class="line number1 index0 alt2">1</div></td><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="python plain">labels_pred </code><code class="python keyword">=</code> <code class="python plain">tf.cast(tf.argmax(</code><code class="python color1">self</code><code class="python plain">.logits, axis</code><code class="python keyword">=</code><code class="python keyword">-</code><code class="python value">1</code><code class="python plain">), tf.int32)</code></div></div></td></tr></tbody></table></div></div></pre>
+<p>至于CRF层，仍然用到上面提到过的动态规划思想。</p>
+<pre><div><div id="highlighter_255741" class="syntaxhighlighter  python"><table border="0" cellpadding="0" cellspacing="0"><tbody><tr><td class="gutter"><div class="line number1 index0 alt2">1</div><div class="line number2 index1 alt1">2</div><div class="line number3 index2 alt2">3</div><div class="line number4 index3 alt1">4</div></td><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="python comments"># shape = (sentence, nclasses)</code></div><div class="line number2 index1 alt1"><code class="python plain">score </code><code class="python keyword">=</code> <code class="python plain">...</code></div><div class="line number3 index2 alt2"><code class="python plain">viterbi_sequence, viterbi_score </code><code class="python keyword">=</code> <code class="python plain">tf.contrib.crf.viterbi_decode(</code></div><div class="line number4 index3 alt1"><code class="python spaces">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code><code class="python plain">score, transition_params)</code></div></div></td></tr></tbody></table></div></div></pre>
+<p>最终通过这份代码，F1值能跑到90％到91％之间。</p>
+<hr>
+<h2>3.后记</h2>
+<p>神经网络做NER，大部分套路都是这样：用基本的RNN、CNN模型做特征提取，最后加上一层CRF，再加点attention机制能稍微提升一下效果，基本上就到瓶颈了。</p>
+<p>在2017年6月份，谷歌团队出品这篇论文《<a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">Attention Is All You Need</a>》还是给我们带来不少震撼的，不用RNN,CNN，只用attention机制，就刷新了翻译任务的最好效果。所以，我们是不是可以想，把这种结构用到命名实体识别里面呢？</p>
+<p>果然，已经有人开始做相关研究。《<a href="https://arxiv.org/abs/1712.01586" target="_blank" rel="noopener">Deep Semantic Role Labeling with Self-Attention</a>》这篇论文发表于2017年12月，实现了一个类似刚才说到的谷歌的模型，做的是SRL任务，也取得了不错的效果，同时他们也有放出实现代码：<a href="https://github.com/XMUNLP/Tagger" target="_blank" rel="noopener">https://github.com/XMUNLP/Tagger</a></p>
+<p>值得学习一下。</p>
+<p>另外，用多模态来做实体识别也是一个方向，特别是对于一些类似微博的语料（有图片），这样做效果更佳。</p>
+
+
+<blockquote class="wp-block-quote"><p>代码和语料： <br><a href="https://www.lookfor404.com/%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E7%9A%84%E8%AF%AD%E6%96%99%E5%92%8C%E4%BB%A3%E7%A0%81/" target="_blank" rel="noreferrer noopener" aria-label="https://www.lookfor404.com/命名实体识别的语料和代码/ （在新窗口打开）">https://www.lookfor404.com/命名实体识别的语料和代码/ </a></p></blockquote>
+	</div><hr><div class="entry-content"><div style="text-align: center;">如果你觉得这篇文章对你有用，可以扫描二维码</div><div style="text-align: center;"><strong>给我 <span style="color: #ff6600;">打个赏</span></strong></div><div align="center"><img class="wp-image-558 size-thumbnail" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/wechat_code.jpg" alt="微信二维码" width="200">or<img class="wp-image-558 size-thumbnail" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/alipay_code.jpg" alt="支付宝二维码" width="200"></div></div><!-- .entry-content -->
+
+	
+	<footer class="entry-footer">
+		<span class="posted-on"><span class="screen-reader-text">发布于 </span><a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/" rel="bookmark"><time class="entry-date published" datetime="2018-02-24T16:10:24+08:00">2018年2月24日</time><time class="updated" datetime="2019-01-29T20:50:58+08:00">2019年1月29日</time></a></span><span class="byline"><span class="author vcard"><span class="screen-reader-text">作者 </span><a class="url fn n" href="https://www.lookfor404.com/author/lipengfei/">李鹏飞</a></span></span><span class="cat-links"><span class="screen-reader-text">分类 </span><a href="https://www.lookfor404.com/category/note/%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab/" rel="category tag">命名实体识别</a></span>			</footer><!-- .entry-footer -->
+
+</article><!-- #post-## -->
+
+<div id="comments" class="comments-area">
+
+			<h2 class="comments-title">
+			《用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四）》有57个想法		</h2>
+
+		
+		<ol class="comment-list">
+					<li id="comment-426" class="comment even thread-even depth-1 parent">
+			<article id="div-comment-426" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/37dbb08b178ea5c7dee7b3c9502b560c" srcset="https://secure.gravatar.com/avatar/37dbb08b178ea5c7dee7b3c9502b560c?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">栗子</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-426">
+							<time datetime="2018-05-25T19:12:28+08:00">
+								2018年5月25日 下午7:12							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>您好，我最近刚想做命名实体识别，还是小白一个，感觉您的文章思路很清晰，从系列一到系列四一步步提升，能不能把这四个系列部分的代码和语料都发给我呢？？谢谢了。</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=426#respond" data-commentid="426" data-postid="641" data-belowelement="div-comment-426" data-respondelement="respond" aria-label="回复给栗子">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-433" class="comment byuser comment-author-lipengfei bypostauthor odd alt depth-2 parent">
+			<article id="div-comment-433" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/104a88bb82fbfdbac823b2c13df93edf.jpeg" srcset="https://secure.gravatar.com/avatar/104a88bb82fbfdbac823b2c13df93edf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">李鹏飞</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-433">
+							<time datetime="2018-06-05T23:12:36+08:00">
+								2018年6月5日 下午11:12							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>最近有点忙，晚些整理了发你</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=433#respond" data-commentid="433" data-postid="641" data-belowelement="div-comment-433" data-respondelement="respond" aria-label="回复给李鹏飞">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-734" class="comment even depth-3 parent">
+			<article id="div-comment-734" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/e7b2b4eabef48a2a9054c2bfb3811a4a" srcset="https://secure.gravatar.com/avatar/e7b2b4eabef48a2a9054c2bfb3811a4a?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">张先生</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-734">
+							<time datetime="2019-05-02T13:40:44+08:00">
+								2019年5月2日 下午1:40							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>请问为啥我用ner做识别时预测出很多不是词的词，比如北京海淀，预测京海。</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=734#respond" data-commentid="734" data-postid="641" data-belowelement="div-comment-734" data-respondelement="respond" aria-label="回复给张先生">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-739" class="comment byuser comment-author-lipengfei bypostauthor odd alt depth-4">
+			<article id="div-comment-739" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/104a88bb82fbfdbac823b2c13df93edf.jpeg" srcset="https://secure.gravatar.com/avatar/104a88bb82fbfdbac823b2c13df93edf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">李鹏飞</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-739">
+							<time datetime="2019-05-05T17:05:29+08:00">
+								2019年5月5日 下午5:05							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>可能训练的数据量太少。另外，按照你的说法，你应该是以字符级别做的模型。也可以尝试中文分词后，再做一版模型看看</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=739#respond" data-commentid="739" data-postid="641" data-belowelement="div-comment-739" data-respondelement="respond" aria-label="回复给李鹏飞">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+		<li id="comment-436" class="comment byuser comment-author-lipengfei bypostauthor even depth-2">
+			<article id="div-comment-436" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/104a88bb82fbfdbac823b2c13df93edf.jpeg" srcset="https://secure.gravatar.com/avatar/104a88bb82fbfdbac823b2c13df93edf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">李鹏飞</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-436">
+							<time datetime="2018-06-08T21:11:29+08:00">
+								2018年6月8日 下午9:11							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>已发送，请查收</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=436#respond" data-commentid="436" data-postid="641" data-belowelement="div-comment-436" data-respondelement="respond" aria-label="回复给李鹏飞">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+		<li id="comment-427" class="comment odd alt thread-odd thread-alt depth-1">
+			<article id="div-comment-427" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/37dbb08b178ea5c7dee7b3c9502b560c" srcset="https://secure.gravatar.com/avatar/37dbb08b178ea5c7dee7b3c9502b560c?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">栗子</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-427">
+							<time datetime="2018-05-25T19:21:59+08:00">
+								2018年5月25日 下午7:21							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>大神在闲暇之余一定要记得给我发哦（渴望的眼神.jpg）</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=427#respond" data-commentid="427" data-postid="641" data-belowelement="div-comment-427" data-respondelement="respond" aria-label="回复给栗子">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+		<li id="comment-443" class="comment even thread-even depth-1 parent">
+			<article id="div-comment-443" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/ce0459982f7a56d0037e6cabb1d41834" srcset="https://secure.gravatar.com/avatar/ce0459982f7a56d0037e6cabb1d41834?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">ufo</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-443">
+							<time datetime="2018-06-13T01:27:20+08:00">
+								2018年6月13日 上午1:27							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>一口气把您NER的博文读完了，受益匪浅，既有理论又有实践指导，很期待能够复现您的方法，能否把这个系列的代码和语料发我一份，84752220@qq.com.不胜感激。</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=443#respond" data-commentid="443" data-postid="641" data-belowelement="div-comment-443" data-respondelement="respond" aria-label="回复给ufo">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-444" class="comment byuser comment-author-lipengfei bypostauthor odd alt depth-2">
+			<article id="div-comment-444" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/104a88bb82fbfdbac823b2c13df93edf.jpeg" srcset="https://secure.gravatar.com/avatar/104a88bb82fbfdbac823b2c13df93edf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">李鹏飞</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-444">
+							<time datetime="2018-06-13T23:22:57+08:00">
+								2018年6月13日 下午11:22							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>近期有空整理一下再发过去</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=444#respond" data-commentid="444" data-postid="641" data-belowelement="div-comment-444" data-respondelement="respond" aria-label="回复给李鹏飞">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+		<li id="comment-448" class="comment byuser comment-author-lipengfei bypostauthor even depth-2">
+			<article id="div-comment-448" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/104a88bb82fbfdbac823b2c13df93edf.jpeg" srcset="https://secure.gravatar.com/avatar/104a88bb82fbfdbac823b2c13df93edf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">李鹏飞</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-448">
+							<time datetime="2018-06-15T23:25:09+08:00">
+								2018年6月15日 下午11:25							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>已发送</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=448#respond" data-commentid="448" data-postid="641" data-belowelement="div-comment-448" data-respondelement="respond" aria-label="回复给李鹏飞">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+		<li id="comment-446" class="comment odd alt thread-odd thread-alt depth-1 parent">
+			<article id="div-comment-446" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/0d9480145f34f9bdc5356c4171c65822" srcset="https://secure.gravatar.com/avatar/0d9480145f34f9bdc5356c4171c65822?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">芹泽</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-446">
+							<time datetime="2018-06-15T16:14:17+08:00">
+								2018年6月15日 下午4:14							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>大神好，可以麻烦发我一份代码吗，非常感谢！</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=446#respond" data-commentid="446" data-postid="641" data-belowelement="div-comment-446" data-respondelement="respond" aria-label="回复给芹泽">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-449" class="comment byuser comment-author-lipengfei bypostauthor even depth-2 parent">
+			<article id="div-comment-449" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/104a88bb82fbfdbac823b2c13df93edf.jpeg" srcset="https://secure.gravatar.com/avatar/104a88bb82fbfdbac823b2c13df93edf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">李鹏飞</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-449">
+							<time datetime="2018-06-15T23:26:49+08:00">
+								2018年6月15日 下午11:26							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>已发送</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=449#respond" data-commentid="449" data-postid="641" data-belowelement="div-comment-449" data-respondelement="respond" aria-label="回复给李鹏飞">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-451" class="comment odd alt depth-3">
+			<article id="div-comment-451" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/0d9480145f34f9bdc5356c4171c65822" srcset="https://secure.gravatar.com/avatar/0d9480145f34f9bdc5356c4171c65822?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">芹泽</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-451">
+							<time datetime="2018-06-16T08:30:28+08:00">
+								2018年6月16日 上午8:30							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>辛苦辛苦，多谢！</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=451#respond" data-commentid="451" data-postid="641" data-belowelement="div-comment-451" data-respondelement="respond" aria-label="回复给芹泽">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+		<li id="comment-450" class="comment even thread-even depth-1 parent">
+			<article id="div-comment-450" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/a03f515308489eb68a5befec0755e9db" srcset="https://secure.gravatar.com/avatar/a03f515308489eb68a5befec0755e9db?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn"><a href="https://www.jianshu.com/u/28c872b28aa3" rel="external nofollow" class="url">邢万里</a></b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-450">
+							<time datetime="2018-06-16T03:01:32+08:00">
+								2018年6月16日 上午3:01							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>博主说的真的有够专业，我最近也在做一个类似实体识别的project，感觉您说的可以帮我拓展思路，请问能否把这个系列的代码和语料发我一份，1542624983@qq.com.非常感谢啦！</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=450#respond" data-commentid="450" data-postid="641" data-belowelement="div-comment-450" data-respondelement="respond" aria-label="回复给邢万里">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-456" class="comment byuser comment-author-lipengfei bypostauthor odd alt depth-2">
+			<article id="div-comment-456" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/104a88bb82fbfdbac823b2c13df93edf.jpeg" srcset="https://secure.gravatar.com/avatar/104a88bb82fbfdbac823b2c13df93edf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">李鹏飞</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-456">
+							<time datetime="2018-06-18T23:14:12+08:00">
+								2018年6月18日 下午11:14							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>已发送，请查收</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=456#respond" data-commentid="456" data-postid="641" data-belowelement="div-comment-456" data-respondelement="respond" aria-label="回复给李鹏飞">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+		<li id="comment-453" class="comment even thread-odd thread-alt depth-1 parent">
+			<article id="div-comment-453" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/7a9aa22d26dac559619861127c56471b.jpeg" srcset="https://secure.gravatar.com/avatar/7a9aa22d26dac559619861127c56471b?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">伍志鹏</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-453">
+							<time datetime="2018-06-18T18:16:54+08:00">
+								2018年6月18日 下午6:16							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>大神好，可以麻烦发我一份代码吗，非常感谢！</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=453#respond" data-commentid="453" data-postid="641" data-belowelement="div-comment-453" data-respondelement="respond" aria-label="回复给伍志鹏">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-457" class="comment byuser comment-author-lipengfei bypostauthor odd alt depth-2">
+			<article id="div-comment-457" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/104a88bb82fbfdbac823b2c13df93edf.jpeg" srcset="https://secure.gravatar.com/avatar/104a88bb82fbfdbac823b2c13df93edf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">李鹏飞</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-457">
+							<time datetime="2018-06-18T23:15:32+08:00">
+								2018年6月18日 下午11:15							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>已发送到你邮箱</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=457#respond" data-commentid="457" data-postid="641" data-belowelement="div-comment-457" data-respondelement="respond" aria-label="回复给李鹏飞">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+		<li id="comment-454" class="comment even thread-even depth-1">
+			<article id="div-comment-454" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/ce0459982f7a56d0037e6cabb1d41834" srcset="https://secure.gravatar.com/avatar/ce0459982f7a56d0037e6cabb1d41834?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">ufo</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-454">
+							<time datetime="2018-06-18T20:51:43+08:00">
+								2018年6月18日 下午8:51							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>节日期间，不辞辛劳，万分感谢！<br>
+素昧平生，慷慨共享，深受感动！</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=454#respond" data-commentid="454" data-postid="641" data-belowelement="div-comment-454" data-respondelement="respond" aria-label="回复给ufo">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+		<li id="comment-458" class="comment odd alt thread-odd thread-alt depth-1 parent">
+			<article id="div-comment-458" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/62753103c94b9110b58b87eadb328cc7" srcset="https://secure.gravatar.com/avatar/62753103c94b9110b58b87eadb328cc7?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">Carrie</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-458">
+							<time datetime="2018-06-20T21:40:35+08:00">
+								2018年6月20日 下午9:40							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>博主可以给我也发一份语料和代码嘛，感觉你讲解得超清楚（深陷期末泥淖的我需要学习一下这方面的知识做一个presentation）<br>
+万分感谢~手动笑脸</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=458#respond" data-commentid="458" data-postid="641" data-belowelement="div-comment-458" data-respondelement="respond" aria-label="回复给Carrie">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-464" class="comment byuser comment-author-lipengfei bypostauthor even depth-2">
+			<article id="div-comment-464" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/104a88bb82fbfdbac823b2c13df93edf.jpeg" srcset="https://secure.gravatar.com/avatar/104a88bb82fbfdbac823b2c13df93edf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">李鹏飞</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-464">
+							<time datetime="2018-06-24T16:32:39+08:00">
+								2018年6月24日 下午4:32							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>这是代码：https://github.com/guillaumegenthial/sequence_tagging<br>
+语料可以搜一下conll2003</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=464#respond" data-commentid="464" data-postid="641" data-belowelement="div-comment-464" data-respondelement="respond" aria-label="回复给李鹏飞">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+		<li id="comment-460" class="comment odd alt thread-even depth-1 parent">
+			<article id="div-comment-460" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/2096f9199da0a76d15c0878485785a21" srcset="https://secure.gravatar.com/avatar/2096f9199da0a76d15c0878485785a21?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">赵淑渝</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-460">
+							<time datetime="2018-06-23T15:21:29+08:00">
+								2018年6月23日 下午3:21							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>您好，麻烦可以发给我一份代码吗？非常感谢！</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=460#respond" data-commentid="460" data-postid="641" data-belowelement="div-comment-460" data-respondelement="respond" aria-label="回复给赵淑渝">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-463" class="comment byuser comment-author-lipengfei bypostauthor even depth-2">
+			<article id="div-comment-463" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/104a88bb82fbfdbac823b2c13df93edf.jpeg" srcset="https://secure.gravatar.com/avatar/104a88bb82fbfdbac823b2c13df93edf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">李鹏飞</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-463">
+							<time datetime="2018-06-24T16:31:39+08:00">
+								2018年6月24日 下午4:31							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p><a href="https://github.com/guillaumegenthial/sequence_tagging" rel="nofollow">https://github.com/guillaumegenthial/sequence_tagging</a></p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=463#respond" data-commentid="463" data-postid="641" data-belowelement="div-comment-463" data-respondelement="respond" aria-label="回复给李鹏飞">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+		<li id="comment-465" class="comment odd alt thread-odd thread-alt depth-1 parent">
+			<article id="div-comment-465" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/7b8cd08856794891e0c7073b65add21a" srcset="https://secure.gravatar.com/avatar/7b8cd08856794891e0c7073b65add21a?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">马靖雯</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-465">
+							<time datetime="2018-06-26T17:46:52+08:00">
+								2018年6月26日 下午5:46							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>大佬~请问可以麻烦发一份代码到我的邮箱里吗？感激不尽！！</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=465#respond" data-commentid="465" data-postid="641" data-belowelement="div-comment-465" data-respondelement="respond" aria-label="回复给马靖雯">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-466" class="comment even depth-2">
+			<article id="div-comment-466" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/7b8cd08856794891e0c7073b65add21a" srcset="https://secure.gravatar.com/avatar/7b8cd08856794891e0c7073b65add21a?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">马靖雯</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-466">
+							<time datetime="2018-06-26T17:47:56+08:00">
+								2018年6月26日 下午5:47							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>邮箱是yut1998@126.com<br>
+Thanks♪(･ω･)ﾉ</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=466#respond" data-commentid="466" data-postid="641" data-belowelement="div-comment-466" data-respondelement="respond" aria-label="回复给马靖雯">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+		<li id="comment-467" class="comment odd alt thread-even depth-1">
+			<article id="div-comment-467" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/7b8cd08856794891e0c7073b65add21a" srcset="https://secure.gravatar.com/avatar/7b8cd08856794891e0c7073b65add21a?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">马靖雯</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-467">
+							<time datetime="2018-06-26T17:51:12+08:00">
+								2018年6月26日 下午5:51							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>没事没事不用麻烦了！刚看到您发的代码地址了！</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=467#respond" data-commentid="467" data-postid="641" data-belowelement="div-comment-467" data-respondelement="respond" aria-label="回复给马靖雯">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+		<li id="comment-468" class="comment even thread-odd thread-alt depth-1 parent">
+			<article id="div-comment-468" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/2096f9199da0a76d15c0878485785a21" srcset="https://secure.gravatar.com/avatar/2096f9199da0a76d15c0878485785a21?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">Amy</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-468">
+							<time datetime="2018-06-27T17:43:05+08:00">
+								2018年6月27日 下午5:43							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>您好，语料可以发我一份吗？conll2003的语料网上找不到。</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=468#respond" data-commentid="468" data-postid="641" data-belowelement="div-comment-468" data-respondelement="respond" aria-label="回复给Amy">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-651" class="comment byuser comment-author-lipengfei bypostauthor odd alt depth-2">
+			<article id="div-comment-651" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/104a88bb82fbfdbac823b2c13df93edf.jpeg" srcset="https://secure.gravatar.com/avatar/104a88bb82fbfdbac823b2c13df93edf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">李鹏飞</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-651">
+							<time datetime="2019-01-29T20:48:42+08:00">
+								2019年1月29日 下午8:48							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p><a href="https://www.lookfor404.com/%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E7%9A%84%E8%AF%AD%E6%96%99%E5%92%8C%E4%BB%A3%E7%A0%81/" rel="nofollow">https://www.lookfor404.com/命名实体识别的语料和代码/</a></p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=651#respond" data-commentid="651" data-postid="641" data-belowelement="div-comment-651" data-respondelement="respond" aria-label="回复给李鹏飞">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+		<li id="comment-485" class="comment even thread-even depth-1 parent">
+			<article id="div-comment-485" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/46aba093758e05cde03e6bd03ef2181f" srcset="https://secure.gravatar.com/avatar/46aba093758e05cde03e6bd03ef2181f?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">ruanruan</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-485">
+							<time datetime="2018-08-21T12:07:21+08:00">
+								2018年8月21日 下午12:07							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>不好意思，github的log里面给的语料的连接打不开了，您能发我一份吗？多谢！</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=485#respond" data-commentid="485" data-postid="641" data-belowelement="div-comment-485" data-respondelement="respond" aria-label="回复给ruanruan">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-486" class="comment odd alt depth-2 parent">
+			<article id="div-comment-486" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/46aba093758e05cde03e6bd03ef2181f" srcset="https://secure.gravatar.com/avatar/46aba093758e05cde03e6bd03ef2181f?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">ruanruan</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-486">
+							<time datetime="2018-08-22T17:20:10+08:00">
+								2018年8月22日 下午5:20							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>博主好，找到conll2003的数据集了。<br>
+想请教一下，如果想加入句法分析特征，直接添加在test.txt中，做为一列出现，可以吗？也就是把conll2003的格式word、pos tag、chunk tag、ner tag，变成word、pos tag、chunk tag、句法tag、ner tag。能否这样添加特征？还想加入一些位置特征，0、1、2、3数值型，不知是否可以？<br>
+请博主不吝指点，是在小白一个，多谢博主。</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=486#respond" data-commentid="486" data-postid="641" data-belowelement="div-comment-486" data-respondelement="respond" aria-label="回复给ruanruan">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-643" class="comment byuser comment-author-lipengfei bypostauthor even depth-3">
+			<article id="div-comment-643" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/104a88bb82fbfdbac823b2c13df93edf.jpeg" srcset="https://secure.gravatar.com/avatar/104a88bb82fbfdbac823b2c13df93edf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">李鹏飞</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-643">
+							<time datetime="2019-01-29T20:46:47+08:00">
+								2019年1月29日 下午8:46							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>可以加的啊，一般不同的特征可以单独作为一列。在CRF++里面就可以直接用这个格式了~如果在神经网络里面，一般会把这些特征单独映射到一个随机初始化的embedding层，然后concate到词向量后面</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=643#respond" data-commentid="643" data-postid="641" data-belowelement="div-comment-643" data-respondelement="respond" aria-label="回复给李鹏飞">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+		<li id="comment-644" class="comment byuser comment-author-lipengfei bypostauthor odd alt depth-2">
+			<article id="div-comment-644" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/104a88bb82fbfdbac823b2c13df93edf.jpeg" srcset="https://secure.gravatar.com/avatar/104a88bb82fbfdbac823b2c13df93edf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">李鹏飞</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-644">
+							<time datetime="2019-01-29T20:46:55+08:00">
+								2019年1月29日 下午8:46							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p><a href="https://www.lookfor404.com/%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E7%9A%84%E8%AF%AD%E6%96%99%E5%92%8C%E4%BB%A3%E7%A0%81/" rel="nofollow">https://www.lookfor404.com/命名实体识别的语料和代码/</a></p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=644#respond" data-commentid="644" data-postid="641" data-belowelement="div-comment-644" data-respondelement="respond" aria-label="回复给李鹏飞">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+		<li id="comment-488" class="comment even thread-odd thread-alt depth-1 parent">
+			<article id="div-comment-488" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/c116fef9348573ff37f8ab662504ee7d" srcset="https://secure.gravatar.com/avatar/c116fef9348573ff37f8ab662504ee7d?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">曹鹏</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-488">
+							<time datetime="2018-08-24T15:59:41+08:00">
+								2018年8月24日 下午3:59							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>大神，可以发一份语料和代码吗？我的邮箱453472804@qq.com，非常感谢！！！</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=488#respond" data-commentid="488" data-postid="641" data-belowelement="div-comment-488" data-respondelement="respond" aria-label="回复给曹鹏">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-642" class="comment byuser comment-author-lipengfei bypostauthor odd alt depth-2">
+			<article id="div-comment-642" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/104a88bb82fbfdbac823b2c13df93edf.jpeg" srcset="https://secure.gravatar.com/avatar/104a88bb82fbfdbac823b2c13df93edf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">李鹏飞</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-642">
+							<time datetime="2019-01-29T20:44:15+08:00">
+								2019年1月29日 下午8:44							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p><a href="https://www.lookfor404.com/%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E7%9A%84%E8%AF%AD%E6%96%99%E5%92%8C%E4%BB%A3%E7%A0%81/" rel="nofollow">https://www.lookfor404.com/命名实体识别的语料和代码/</a></p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=642#respond" data-commentid="642" data-postid="641" data-belowelement="div-comment-642" data-respondelement="respond" aria-label="回复给李鹏飞">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+		<li id="comment-497" class="comment even thread-even depth-1 parent">
+			<article id="div-comment-497" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/2d83b5696e3b7e5b3aa674839da9ca84" srcset="https://secure.gravatar.com/avatar/2d83b5696e3b7e5b3aa674839da9ca84?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">符宇坚</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-497">
+							<time datetime="2018-08-30T03:07:43+08:00">
+								2018年8月30日 上午3:07							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>求大佬的CoNLL语料库，在网上翻遍了也没有找到，万分感谢！</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=497#respond" data-commentid="497" data-postid="641" data-belowelement="div-comment-497" data-respondelement="respond" aria-label="回复给符宇坚">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-499" class="comment odd alt depth-2">
+			<article id="div-comment-499" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/2d83b5696e3b7e5b3aa674839da9ca84" srcset="https://secure.gravatar.com/avatar/2d83b5696e3b7e5b3aa674839da9ca84?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">符宇坚</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-499">
+							<time datetime="2018-08-31T00:54:48+08:00">
+								2018年8月31日 上午12:54							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>如果博主看到了麻烦传一份语料库，帮大忙了，谢谢！邮箱是fuyj@mail.ustc.edu.cn</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=499#respond" data-commentid="499" data-postid="641" data-belowelement="div-comment-499" data-respondelement="respond" aria-label="回复给符宇坚">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+		<li id="comment-641" class="comment byuser comment-author-lipengfei bypostauthor even depth-2">
+			<article id="div-comment-641" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/104a88bb82fbfdbac823b2c13df93edf.jpeg" srcset="https://secure.gravatar.com/avatar/104a88bb82fbfdbac823b2c13df93edf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">李鹏飞</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-641">
+							<time datetime="2019-01-29T20:43:53+08:00">
+								2019年1月29日 下午8:43							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p><a href="https://www.lookfor404.com/%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E7%9A%84%E8%AF%AD%E6%96%99%E5%92%8C%E4%BB%A3%E7%A0%81/" rel="nofollow">https://www.lookfor404.com/命名实体识别的语料和代码/</a></p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=641#respond" data-commentid="641" data-postid="641" data-belowelement="div-comment-641" data-respondelement="respond" aria-label="回复给李鹏飞">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+		<li id="comment-546" class="comment odd alt thread-odd thread-alt depth-1 parent">
+			<article id="div-comment-546" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/9710feaa59a00fa8a74100cef6d8193a" srcset="https://secure.gravatar.com/avatar/9710feaa59a00fa8a74100cef6d8193a?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">余盛宝</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-546">
+							<time datetime="2018-09-26T15:07:10+08:00">
+								2018年9月26日 下午3:07							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>你好，也帮忙发我一份，424062028@qq.com，万分感谢！</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=546#respond" data-commentid="546" data-postid="641" data-belowelement="div-comment-546" data-respondelement="respond" aria-label="回复给余盛宝">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-639" class="comment byuser comment-author-lipengfei bypostauthor even depth-2">
+			<article id="div-comment-639" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/104a88bb82fbfdbac823b2c13df93edf.jpeg" srcset="https://secure.gravatar.com/avatar/104a88bb82fbfdbac823b2c13df93edf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">李鹏飞</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-639">
+							<time datetime="2019-01-29T20:37:34+08:00">
+								2019年1月29日 下午8:37							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p><a href="https://www.lookfor404.com/%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E7%9A%84%E8%AF%AD%E6%96%99%E5%92%8C%E4%BB%A3%E7%A0%81/" rel="nofollow">https://www.lookfor404.com/命名实体识别的语料和代码/</a></p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=639#respond" data-commentid="639" data-postid="641" data-belowelement="div-comment-639" data-respondelement="respond" aria-label="回复给李鹏飞">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+		<li id="comment-547" class="comment odd alt thread-even depth-1 parent">
+			<article id="div-comment-547" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/bc1784d626f5e990a0b06417cd6ab442" srcset="https://secure.gravatar.com/avatar/bc1784d626f5e990a0b06417cd6ab442?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">周子河</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-547">
+							<time datetime="2018-10-05T14:00:07+08:00">
+								2018年10月5日 下午2:00							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>您好，<br>
+我正在尝试BiLSTM+crf做序列标注，但是代码一直有些问题。可以参考一下您的语料和代码吗？（714753195@qq.com）</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=547#respond" data-commentid="547" data-postid="641" data-belowelement="div-comment-547" data-respondelement="respond" aria-label="回复给周子河">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-638" class="comment byuser comment-author-lipengfei bypostauthor even depth-2">
+			<article id="div-comment-638" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/104a88bb82fbfdbac823b2c13df93edf.jpeg" srcset="https://secure.gravatar.com/avatar/104a88bb82fbfdbac823b2c13df93edf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">李鹏飞</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-638">
+							<time datetime="2019-01-29T20:37:28+08:00">
+								2019年1月29日 下午8:37							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p><a href="https://www.lookfor404.com/%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E7%9A%84%E8%AF%AD%E6%96%99%E5%92%8C%E4%BB%A3%E7%A0%81/" rel="nofollow">https://www.lookfor404.com/命名实体识别的语料和代码/</a></p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=638#respond" data-commentid="638" data-postid="641" data-belowelement="div-comment-638" data-respondelement="respond" aria-label="回复给李鹏飞">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+		<li id="comment-594" class="comment odd alt thread-odd thread-alt depth-1 parent">
+			<article id="div-comment-594" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/5e03f811a8f7b74c14fc2e4cc2dd321c" srcset="https://secure.gravatar.com/avatar/5e03f811a8f7b74c14fc2e4cc2dd321c?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">wendy</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-594">
+							<time datetime="2018-11-23T18:30:00+08:00">
+								2018年11月23日 下午6:30							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>请问一下，测评的时候有没有去掉‘O’标签。去掉前后差别有多大？</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=594#respond" data-commentid="594" data-postid="641" data-belowelement="div-comment-594" data-respondelement="respond" aria-label="回复给wendy">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-635" class="comment byuser comment-author-lipengfei bypostauthor even depth-2">
+			<article id="div-comment-635" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/104a88bb82fbfdbac823b2c13df93edf.jpeg" srcset="https://secure.gravatar.com/avatar/104a88bb82fbfdbac823b2c13df93edf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">李鹏飞</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-635">
+							<time datetime="2019-01-29T20:36:35+08:00">
+								2019年1月29日 下午8:36							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>为什么要去掉O标签呢？每一个单词要有对应的标签才行呀，O代表着其它成分</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=635#respond" data-commentid="635" data-postid="641" data-belowelement="div-comment-635" data-respondelement="respond" aria-label="回复给李鹏飞">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+		<li id="comment-600" class="comment odd alt thread-even depth-1 parent">
+			<article id="div-comment-600" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/de36e0ff9c853fd9189e02e0ae066c3c" srcset="https://secure.gravatar.com/avatar/de36e0ff9c853fd9189e02e0ae066c3c?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">forever1dreamsxx</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-600">
+							<time datetime="2018-12-04T17:34:41+08:00">
+								2018年12月4日 下午5:34							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>hi 你好！我run了一下你github的代码，出现下面的错误，训练不能成功，麻烦看看是什么意思，对python不熟悉，希望用python来训练模型，然后用C++来提供NER服务。<br>
+make run:<br>
+python build_data.py<br>
+Building vocab…<br>
+– done. 21 tokens<br>
+Building vocab…<br>
+– done. 400000 tokens<br>
+Writing vocab…<br>
+– done. 23 tokens<br>
+Writing vocab…<br>
+– done. 9 tokens<br>
+Traceback (most recent call last):<br>
+  File “build_data.py”, line 55, in<br>
+    main()<br>
+  File “build_data.py”, line 46, in main<br>
+    config.filename_trimmed, config.dim_word)<br>
+  File “/home/sunxx/work/tensorflow/sequence_tagging/model/data_utils.py”, line 217, in export_trimmed_glove_vectors<br>
+    np.savez_compressed(trimmed_filename, embeddings=embeddings)<br>
+  File “/usr/lib64/python2.7/site-packages/numpy/lib/npyio.py”, line 659, in savez_compressed<br>
+    _savez(file, args, kwds, True)<br>
+  File “/usr/lib64/python2.7/site-packages/numpy/lib/npyio.py”, line 716, in _savez<br>
+    pickle_kwargs=pickle_kwargs)<br>
+  File “/usr/lib64/python2.7/site-packages/numpy/lib/format.py”, line 562, in write_array<br>
+    version)<br>
+  File “/usr/lib64/python2.7/site-packages/numpy/lib/format.py”, line 308, in _write_array_header<br>
+    header = asbytes(_filter_header(header))<br>
+  File “/usr/lib64/python2.7/site-packages/numpy/lib/format.py”, line 467, in _filter_header<br>
+    return tokenize.untokenize(tokens)<br>
+  File “/usr/lib64/python2.7/tokenize.py”, line 262, in untokenize<br>
+    return ut.untokenize(iterable)<br>
+  File “/usr/lib64/python2.7/tokenize.py”, line 198, in untokenize<br>
+    self.add_whitespace(start)<br>
+  File “/usr/lib64/python2.7/tokenize.py”, line 187, in add_whitespace<br>
+    assert row &lt;= self.prev_row<br>
+AssertionError<br>
+make: *** [run] Error 1</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=600#respond" data-commentid="600" data-postid="641" data-belowelement="div-comment-600" data-respondelement="respond" aria-label="回复给forever1dreamsxx">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-632" class="comment byuser comment-author-lipengfei bypostauthor even depth-2">
+			<article id="div-comment-632" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/104a88bb82fbfdbac823b2c13df93edf.jpeg" srcset="https://secure.gravatar.com/avatar/104a88bb82fbfdbac823b2c13df93edf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">李鹏飞</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-632">
+							<time datetime="2019-01-29T20:34:39+08:00">
+								2019年1月29日 下午8:34							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>建议你检查一下glove文件路径是否配置正确~我这边跑没有问题<br>
+另外，这个不是我的代码哈~如果实在搞不定，可以直接去作者的github起一个issue</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=632#respond" data-commentid="632" data-postid="641" data-belowelement="div-comment-632" data-respondelement="respond" aria-label="回复给李鹏飞">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+		<li id="comment-603" class="comment odd alt thread-odd thread-alt depth-1 parent">
+			<article id="div-comment-603" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/acbca0471c2cdd1558330cd334ebfaef" srcset="https://secure.gravatar.com/avatar/acbca0471c2cdd1558330cd334ebfaef?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">zzzzzzzzzha</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-603">
+							<time datetime="2018-12-12T14:58:31+08:00">
+								2018年12月12日 下午2:58							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>您好，我最近在学习做NER，刚入门，感觉您的文章写的非常好，通俗易懂。希望您能将把这四个系列的代码和语料都发给我，我复现实验进行学习。我的邮箱是：zhanlaoban@gmail.com。麻烦您了，感激不尽！谢谢！</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=603#respond" data-commentid="603" data-postid="641" data-belowelement="div-comment-603" data-respondelement="respond" aria-label="回复给zzzzzzzzzha">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-631" class="comment byuser comment-author-lipengfei bypostauthor even depth-2">
+			<article id="div-comment-631" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/104a88bb82fbfdbac823b2c13df93edf.jpeg" srcset="https://secure.gravatar.com/avatar/104a88bb82fbfdbac823b2c13df93edf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">李鹏飞</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-631">
+							<time datetime="2019-01-29T20:29:04+08:00">
+								2019年1月29日 下午8:29							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>请参看：https://www.lookfor404.com/命名实体识别的语料和代码/</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=631#respond" data-commentid="631" data-postid="641" data-belowelement="div-comment-631" data-respondelement="respond" aria-label="回复给李鹏飞">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+		<li id="comment-624" class="comment odd alt thread-even depth-1">
+			<article id="div-comment-624" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/b956a4a5575eecd4de8acb2f3531f9bc" srcset="https://secure.gravatar.com/avatar/b956a4a5575eecd4de8acb2f3531f9bc?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">shado</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-624">
+							<time datetime="2019-01-21T11:34:51+08:00">
+								2019年1月21日 上午11:34							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>你好，请问怎样在lstm+crf 模型加入attention？</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=624#respond" data-commentid="624" data-postid="641" data-belowelement="div-comment-624" data-respondelement="respond" aria-label="回复给shado">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+		<li id="comment-685" class="comment even thread-odd thread-alt depth-1 parent">
+			<article id="div-comment-685" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/4adda435da933dd39b43dd6ee353e0cf" srcset="https://secure.gravatar.com/avatar/4adda435da933dd39b43dd6ee353e0cf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">知识图谱</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-685">
+							<time datetime="2019-03-21T15:52:24+08:00">
+								2019年3月21日 下午3:52							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>您好，最近需要做一个命名实体识别的实验，可以把这个系列的代码和语料发我一份吗？408401390@qq.com，好像是这个系列第三篇文章没有代码和语料集。如果方便的话，可以给发一个系列的吗？谢谢您</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=685#respond" data-commentid="685" data-postid="641" data-belowelement="div-comment-685" data-respondelement="respond" aria-label="回复给知识图谱">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-692" class="comment byuser comment-author-lipengfei bypostauthor odd alt depth-2">
+			<article id="div-comment-692" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/104a88bb82fbfdbac823b2c13df93edf.jpeg" srcset="https://secure.gravatar.com/avatar/104a88bb82fbfdbac823b2c13df93edf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">李鹏飞</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-692">
+							<time datetime="2019-03-25T23:44:29+08:00">
+								2019年3月25日 下午11:44							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p><a href="https://www.lookfor404.com/%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E7%9A%84%E8%AF%AD%E6%96%99%E5%92%8C%E4%BB%A3%E7%A0%81/" rel="nofollow">https://www.lookfor404.com/命名实体识别的语料和代码/</a></p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=692#respond" data-commentid="692" data-postid="641" data-belowelement="div-comment-692" data-respondelement="respond" aria-label="回复给李鹏飞">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+		<li id="comment-712" class="comment even thread-even depth-1 parent">
+			<article id="div-comment-712" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/a4dc2275087ed0a8f8549a52efb659a2" srcset="https://secure.gravatar.com/avatar/a4dc2275087ed0a8f8549a52efb659a2?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">Karlfans</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-712">
+							<time datetime="2019-04-11T09:03:19+08:00">
+								2019年4月11日 上午9:03							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>兄台，您这个NER模型的词向量训练语料和模型训练语料是否可以一样？请不吝赐教，谢谢……</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=712#respond" data-commentid="712" data-postid="641" data-belowelement="div-comment-712" data-respondelement="respond" aria-label="回复给Karlfans">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-714" class="comment byuser comment-author-lipengfei bypostauthor odd alt depth-2 parent">
+			<article id="div-comment-714" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/104a88bb82fbfdbac823b2c13df93edf.jpeg" srcset="https://secure.gravatar.com/avatar/104a88bb82fbfdbac823b2c13df93edf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">李鹏飞</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-714">
+							<time datetime="2019-04-12T11:07:48+08:00">
+								2019年4月12日 上午11:07							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>一般词向量的话，用外部预训练好的效果更好。用内部语料训练的话，可以解决oov问题，但能学习到的信息有限。</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=714#respond" data-commentid="714" data-postid="641" data-belowelement="div-comment-714" data-respondelement="respond" aria-label="回复给李鹏飞">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-725" class="comment even depth-3 parent">
+			<article id="div-comment-725" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/a4dc2275087ed0a8f8549a52efb659a2" srcset="https://secure.gravatar.com/avatar/a4dc2275087ed0a8f8549a52efb659a2?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">Karlfans</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-725">
+							<time datetime="2019-04-22T09:35:41+08:00">
+								2019年4月22日 上午9:35							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>但是特定领域的话没有对应的语料，比如说电子元器件的一些资料，这种就没有找到对应的语料，我目前训练结果很不理想，请教下这种情况应该什么改进呢？</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=725#respond" data-commentid="725" data-postid="641" data-belowelement="div-comment-725" data-respondelement="respond" aria-label="回复给Karlfans">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-727" class="comment byuser comment-author-lipengfei bypostauthor odd alt depth-4 parent">
+			<article id="div-comment-727" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/104a88bb82fbfdbac823b2c13df93edf.jpeg" srcset="https://secure.gravatar.com/avatar/104a88bb82fbfdbac823b2c13df93edf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">李鹏飞</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-727">
+							<time datetime="2019-04-24T01:03:43+08:00">
+								2019年4月24日 上午1:03							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>1.没有语料的话，是没办法用hmm或者crf来做模型的，只能结合词典和规则来做。<br>
+2.第二个问题不太理解你的意思呢，可以补充说明一下吗？</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=727#respond" data-commentid="727" data-postid="641" data-belowelement="div-comment-727" data-respondelement="respond" aria-label="回复给李鹏飞">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-728" class="comment even depth-5 parent">
+			<article id="div-comment-728" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/a4dc2275087ed0a8f8549a52efb659a2" srcset="https://secure.gravatar.com/avatar/a4dc2275087ed0a8f8549a52efb659a2?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">Karlfans</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-728">
+							<time datetime="2019-04-24T09:45:31+08:00">
+								2019年4月24日 上午9:45							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>比如说我有100万个PDF资料，是否可以使用这些资料去训练词向量？<br>
+我的想法是用这100万的资料去训练词向量，然后再和GloVe官方训练好的语料进行合并作为最终词向量，不知道这种方式是否可行，这种方式就可以解决oov问题，而且还能扩充词向量。</p>
+<p>而针对第二个问题，主要是说有这么个场景，一篇资料里面有可能有文本、图片和表格，而对于表格来说，里面提取出的文本是没有语义的，我是否可以和正常文本一样处理，或者说需要做一些特殊的标记，又或者说我只能单独提出做规则处理？<br>
+目前我使用的就是这篇文章的算法来实现，最终的F1 score只有47%，现在没有明确的想法去提升这个结果，望不吝赐教，谢谢！</p>
+				</div><!-- .comment-content -->
+
+							</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+		<li id="comment-738" class="comment byuser comment-author-lipengfei bypostauthor odd alt depth-5">
+			<article id="div-comment-738" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/104a88bb82fbfdbac823b2c13df93edf.jpeg" srcset="https://secure.gravatar.com/avatar/104a88bb82fbfdbac823b2c13df93edf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">李鹏飞</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-738">
+							<time datetime="2019-05-05T17:03:10+08:00">
+								2019年5月5日 下午5:03							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>1.如果是单独拿100万个PDF的语料来训练词向量的话，训练出来的词向量的含义和glove官方预训练模型会有偏差，因为训练语料规模领域以及模型的设置不一样。最好完全按照官方预训练模型一样的参数来训练，再作为补充向量。<br>
+2.主要看你最终要预测的文本形态是怎样的，假如你最终要预测的文本都是自然句子，那么表格内的这些语料用来训练模型的意义不大。</p>
+				</div><!-- .comment-content -->
+
+							</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+		<li id="comment-726" class="comment even depth-3">
+			<article id="div-comment-726" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/a4dc2275087ed0a8f8549a52efb659a2" srcset="https://secure.gravatar.com/avatar/a4dc2275087ed0a8f8549a52efb659a2?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">Karlfans</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-726">
+							<time datetime="2019-04-22T10:09:16+08:00">
+								2019年4月22日 上午10:09							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>还请教个问题，比如说我想标记一篇有表格的文章里面的实体，是否可以使用自然语言的命名实体识别实现，如果能够实现，那么需要做什么特殊处理吗？比如说增加表格的标记等，望不吝赐教，谢谢……</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=726#respond" data-commentid="726" data-postid="641" data-belowelement="div-comment-726" data-respondelement="respond" aria-label="回复给Karlfans">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+		<li id="comment-730" class="comment odd alt thread-odd thread-alt depth-1 parent">
+			<article id="div-comment-730" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/ce7a58e9b1ee2e790ca8be8861f64014" srcset="https://secure.gravatar.com/avatar/ce7a58e9b1ee2e790ca8be8861f64014?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">bin</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-730">
+							<time datetime="2019-04-26T18:33:47+08:00">
+								2019年4月26日 下午6:33							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>楼主：<br>
+首先感谢楼主分享，但是文中一点有点疑惑。<br>
+就是在2.1小节，建立字母向量表示也就是代码中的char-embedding。从代码中可以看到，应该是使用随机数初始化一个embedding矩阵，之后使用lookup查字典的方式去寻找这个向量。本质上是利用bilstm来获得这个embedding。这个embedding到底学习到的是字母的embedding么？我觉着不太对。<br>
+突然想到ELMO模型中，也是使用word-embedding之后接了bilstm，但是在那篇论文中这个bilstm学习到的是句法和语义信息。这里应该是同理的！但是哪里是将三个embedding依据不同权值做累加，这里直接concat之后作为输入，是不是可以理解为concat之后的embedding包含两个特征，就像机器学习中的不同变量一样。思路有点混乱，小白一枚，说错的地方，海涵。</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=730#respond" data-commentid="730" data-postid="641" data-belowelement="div-comment-730" data-respondelement="respond" aria-label="回复给bin">回复</a></div>			</article><!-- .comment-body -->
+		<ol class="children">
+		<li id="comment-740" class="comment byuser comment-author-lipengfei bypostauthor even depth-2">
+			<article id="div-comment-740" class="comment-body">
+				<footer class="comment-meta">
+					<div class="comment-author vcard">
+						<img alt="" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/104a88bb82fbfdbac823b2c13df93edf.jpeg" srcset="https://secure.gravatar.com/avatar/104a88bb82fbfdbac823b2c13df93edf?s=112&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-56 photo" height="56" width="56">						<b class="fn">李鹏飞</b><span class="says">说道：</span>					</div><!-- .comment-author -->
+
+					<div class="comment-metadata">
+						<a href="https://www.lookfor404.com/%e7%94%a8%e5%8f%8c%e5%90%91lstmcrf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e9%99%84tensorflow%e4%bb%a3%e7%a0%81-ner%e7%b3%bb%e5%88%97%ef%bc%88%e5%9b%9b/#comment-740">
+							<time datetime="2019-05-05T17:12:50+08:00">
+								2019年5月5日 下午5:12							</time>
+						</a>
+											</div><!-- .comment-metadata -->
+
+									</footer><!-- .comment-meta -->
+
+				<div class="comment-content">
+					<p>1.char-embedding确实是随机初始化的，然后concat在对应的word后面，作为整个word的表示，在模型训练的过程中，char-embedding是会随着模型一起微调学习的， 所以会学习到字母的embedding。<br>
+2.这个模型和ELMO是不一样的，ELMO的网络结构比较深一点，取3层向量依据不同权重加起来（不是concat），可以得到不同的语义表示。而这个模型的embedding层，正如你所说，可以concat起来可以看作是两个特征，让模型去学习。</p>
+				</div><!-- .comment-content -->
+
+				<div class="reply"><a rel="nofollow" class="comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/?replytocom=740#respond" data-commentid="740" data-postid="641" data-belowelement="div-comment-740" data-respondelement="respond" aria-label="回复给李鹏飞">回复</a></div>			</article><!-- .comment-body -->
+		</li><!-- #comment-## -->
+</ol><!-- .children -->
+</li><!-- #comment-## -->
+		</ol><!-- .comment-list -->
+
+		
+	
+	
+		<div id="respond" class="comment-respond">
+		<h3 id="reply-title" class="comment-reply-title">发表评论 <small><a rel="nofollow" id="cancel-comment-reply-link" href="https://www.lookfor404.com/%E7%94%A8%E5%8F%8C%E5%90%91lstmcrf%E5%81%9A%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB%E9%99%84tensorflow%E4%BB%A3%E7%A0%81-ner%E7%B3%BB%E5%88%97%EF%BC%88%E5%9B%9B/#respond" style="display:none;">取消回复</a></small></h3>			<form action="https://www.lookfor404.com/wp-comments-post.php" method="post" id="commentform" class="comment-form" novalidate="">
+				<p class="comment-notes"><span id="email-notes">电子邮件地址不会被公开。</span> 必填项已用<span class="required">*</span>标注</p><p class="comment-form-comment"><label for="comment">评论</label> <textarea id="comment" name="comment" cols="45" rows="8" maxlength="65525" required="required"></textarea></p><p class="comment-form-author"><label for="author">姓名 <span class="required">*</span></label> <input id="author" name="author" type="text" value="" size="30" maxlength="245" required="required"></p>
+<p class="comment-form-email"><label for="email">电子邮件 <span class="required">*</span></label> <input id="email" name="email" type="email" value="" size="30" maxlength="100" aria-describedby="email-notes" required="required"></p>
+<p class="comment-form-url"><label for="url">站点</label> <input id="url" name="url" type="url" value="" size="30" maxlength="200"></p>
+<p class="form-submit"><input name="submit" type="submit" id="submit" class="submit" value="发表评论"> <input type="hidden" name="comment_post_ID" value="641" id="comment_post_ID">
+<input type="hidden" name="comment_parent" id="comment_parent" value="0">
+</p><p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="3632e89f0a"></p><p style="display: none;"></p>			<input type="hidden" id="ak_js" name="ak_js" value="1557732320649"></form>
+			</div><!-- #respond -->
+	
+</div><!-- .comments-area -->
+
+	<nav class="navigation post-navigation" role="navigation">
+		<h2 class="screen-reader-text">文章导航</h2>
+		<div class="nav-links"><div class="nav-previous"><a href="https://www.lookfor404.com/%e7%94%a8crf%e5%81%9a%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab-ner%e7%b3%bb%e5%88%97%ef%bc%88%e4%b8%89%ef%bc%89/" rel="prev"><span class="meta-nav" aria-hidden="true">上一</span> <span class="screen-reader-text">上篇文章：</span> <span class="post-title">用CRF做命名实体识别——NER系列（三）</span></a></div><div class="nav-next"><a href="https://www.lookfor404.com/%e5%91%bd%e5%90%8d%e5%ae%9e%e4%bd%93%e8%af%86%e5%88%ab%e7%9a%84%e8%af%ad%e6%96%99%e5%92%8c%e4%bb%a3%e7%a0%81/" rel="next"><span class="meta-nav" aria-hidden="true">下一</span> <span class="screen-reader-text">下篇文章：</span> <span class="post-title">命名实体识别的语料和代码</span></a></div></div>
+	</nav>
+		</main><!-- .site-main -->
+	</div><!-- .content-area -->
+
+
+	</div><!-- .site-content -->
+
+	<footer id="colophon" class="site-footer" role="contentinfo">
+		<div class="site-info">
+						
+			<a href="http://www.lookfor404.com/">找不到的博客</a>|<a href="http://www.lookfor404.com/sitemap/">网站地图</a>|<a href="http://www.miitbeian.gov.cn/">粤ICP备16109948号-1</a>
+		</div><!-- .site-info -->
+	</footer><!-- .site-footer -->
+
+</div><!-- .site -->
+
+<script type="text/javascript" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/form.js"></script>
+<script type="text/javascript" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/shCore.js"></script>
+<script type="text/javascript" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/shBrushPython.js"></script>
+<script type="text/javascript">
+	(function(){
+		var corecss = document.createElement('link');
+		var themecss = document.createElement('link');
+		var corecssurl = "https://www.lookfor404.com/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/styles/shCore.css?ver=3.0.9b";
+		if ( corecss.setAttribute ) {
+				corecss.setAttribute( "rel", "stylesheet" );
+				corecss.setAttribute( "type", "text/css" );
+				corecss.setAttribute( "href", corecssurl );
+		} else {
+				corecss.rel = "stylesheet";
+				corecss.href = corecssurl;
+		}
+		document.getElementsByTagName("head")[0].insertBefore( corecss, document.getElementById("syntaxhighlighteranchor") );
+		var themecssurl = "https://www.lookfor404.com/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/styles/shThemeDefault.css?ver=3.0.9b";
+		if ( themecss.setAttribute ) {
+				themecss.setAttribute( "rel", "stylesheet" );
+				themecss.setAttribute( "type", "text/css" );
+				themecss.setAttribute( "href", themecssurl );
+		} else {
+				themecss.rel = "stylesheet";
+				themecss.href = themecssurl;
+		}
+		//document.getElementById("syntaxhighlighteranchor").appendChild(themecss);
+		document.getElementsByTagName("head")[0].insertBefore( themecss, document.getElementById("syntaxhighlighteranchor") );
+	})();
+	SyntaxHighlighter.config.strings.expandSource = '+ expand source';
+	SyntaxHighlighter.config.strings.help = '帮助';
+	SyntaxHighlighter.config.strings.alert = 'SyntaxHighlighter\n\n';
+	SyntaxHighlighter.config.strings.noBrush = '无法找到Brush：';
+	SyntaxHighlighter.config.strings.brushNotHtmlScript = 'Brush不能设置 html-script选项';
+	SyntaxHighlighter.defaults['pad-line-numbers'] = false;
+	SyntaxHighlighter.defaults['toolbar'] = false;
+	SyntaxHighlighter.all();
+</script>
+<script type="text/javascript" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/skip-link-focus-fix.js"></script>
+<script type="text/javascript" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/comment-reply.min.js"></script>
+<script type="text/javascript">
+/* <![CDATA[ */
+var screenReaderText = {"expand":"<span class=\"screen-reader-text\">\u5c55\u5f00\u5b50\u83dc\u5355<\/span>","collapse":"<span class=\"screen-reader-text\">\u6298\u53e0\u5b50\u83dc\u5355<\/span>"};
+/* ]]> */
+</script>
+<script type="text/javascript" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/functions.js"></script>
+<script type="text/javascript" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/wp-embed.min.js"></script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "//hm.baidu.com/hm.js?84883e3f8abfcc3b222b9609895fb459";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+<script>
+(function(){
+   var src = (document.location.protocol == "http:") ? "http://js.passport.qihucdn.com/11.0.1.js?7f0f7772adbef16560f6a3d9eacdadb4":"https://jspassport.ssl.qhimg.com/11.0.1.js?7f0f7772adbef16560f6a3d9eacdadb4";
+   document.write('<script src="' + src + '" id="sozz"><\/script>');
+})();
+</script><script src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/11.0.1.js" id="sozz"></script><script charset="utf-8" src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/ab77b6ea7f3fbf79.js"></script>
+
+<script src="./用双向lstm+CRF做命名实体识别(附tensorflow代码)——NER系列（四） – 找不到的博客_files/jquery(1).js"></script>
+<script>
+
+
+　　　　$(".entry-content").after("<hr /><div class='entry-content' ><div style='text-align: center;'>如果你觉得这篇文章对你有用，可以扫描二维码</strong></div><div style='text-align: center;'><strong>给我 <span style='color: #ff6600;'>打个赏</span></strong></div><div align='center'><img class='wp-image-558 size-thumbnail' src='http://www.lookfor404.com/wp-content/uploads/2016/11/wechat_code.jpg' alt='微信二维码' width='200' >or<img class='wp-image-558 size-thumbnail' src='http://www.lookfor404.com/wp-content/uploads/2016/11/alipay_code.jpg' alt='支付宝二维码' width='200' ></div></div>"); 
+
+
+</script>
+</body></html>
