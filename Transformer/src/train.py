@@ -114,6 +114,7 @@ with tf.Session() as sess:
             calc_bleu(ref_path, translation_path,'eval',epoch)
 
             logging.info("# save models")
+            model_output = "The%02dL Epoch loss is %.2f" % (epoch, _loss)
             ckpt_name = os.path.join(hp.modeldir, model_output)
             saver.save(sess, ckpt_name, global_step=_gs)
             logging.info("after training of {} epochs, {} has been saved.".format(epoch, ckpt_name))

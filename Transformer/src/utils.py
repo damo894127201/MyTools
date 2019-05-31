@@ -173,18 +173,37 @@ def calc_bleu(ref,translation,name='test',epoch=0):
         trans_lst = f_trans.read().split('\n')
     # 判断参考译文与模型生成译文的数量是否一致
     assert len(ref_lst) == len(trans_lst),"参考译文和模型生成译文的数量不一致"
-    fi = open("../result/"+name+"bleu.score", "a+",encoding='utf-8')
-    bleus = [] # 存储每条翻译的bleu值
+    fi = open("../result/"+name+"_bleu.score", "a+",encoding='utf-8')
+    bleus_1 = [] # 存储每条翻译的bleu-1值
+    bleus_2 = []  # 存储每条翻译的bleu-2值
+    bleus_3 = []  # 存储每条翻译的bleu-3值
+    bleus_4 = []  # 存储每条翻译的bleu-4值
     for ref,trans in zip(ref_lst,trans_lst):
         ref = [list(ref)]
         trans = list(trans)
-        bleu = sentence_bleu(ref,trans)
-        bleus.append(bleu)
+        bleu1 = sentence_bleu(ref, trans, weights=(1, 0, 0, 0))
+        bleu2 = sentence_bleu(ref, trans, weights=(0.5, 0.5, 0, 0))
+        bleu3 = sentence_bleu(ref, trans, weights=(0.33, 0.33, 0.33, 0))
+        bleu4 = sentence_bleu(ref,trans,weights=(0.25,0.25,0.25,0.25))
+        bleus_1.append(bleu1)
+        bleus_2.append(bleu2)
+        bleus_3.append(bleu3)
+        bleus_4.append(bleu4)
     # 求bleu的平均值
-    bleu_score = sum(bleus)/float(len(bleus)) * 100
-    fi.write(str(epoch)+':'+str(bleu_score)+'\n')
+    bleu_score_1 = sum(bleus_1)/float(len(bleus_1)) * 100
+    bleu_score_2 = sum(bleus_2) / float(len(bleus_2)) * 100
+    bleu_score_3 = sum(bleus_3) / float(len(bleus_3)) * 100
+    bleu_score_4 = sum(bleus_4) / float(len(bleus_4)) * 100
+    fi.write('Epoch '+str(epoch)+' bleu_score 1 : '+str(bleu_score_1)+'\n')
+    fi.write('Epoch '+str(epoch)+' bleu_score 2 : '+str(bleu_score_2)+'\n')
+    fi.write('Epoch '+str(epoch)+' bleu_score 3 : '+str(bleu_score_3)+'\n')
+    fi.write('Epoch '+str(epoch)+' bleu_score 4 : '+str(bleu_score_4)+'\n')
+    fi.write('\n')
     fi.close()
-    logging.info('Epoch: %d  BLEU Score: %.2f'% (epoch,bleu_score))
+    logging.info('Epoch: %d  BLEU Score 1: %.2f'% (epoch,bleu_score_1))
+    logging.info('Epoch: %d  BLEU Score 2: %.2f' % (epoch, bleu_score_2))
+    logging.info('Epoch: %d  BLEU Score 3: %.2f' % (epoch, bleu_score_3))
+    logging.info('Epoch: %d  BLEU Score 4: %.2f' % (epoch, bleu_score_4))
 
 # def get_inference_variables(ckpt, filter):
 #     reader = pywrap_tensorflow.NewCheckpointReader(ckpt)
