@@ -91,7 +91,7 @@ with tf.Session() as sess:
 
             # 将原始的结果写到本地
             logging.info("write references")
-            model_output = "refs: The%02dL Epoch loss is %.2f" % (epoch, _loss)
+            model_output = "refs_ The%02dL Epoch loss is %.2f" % (epoch, _loss)
             if not os.path.exists(hp.eval_result): os.makedirs(hp.eval_result)
             ref_path = os.path.join(hp.eval_result, model_output)
             with open(ref_path, 'w', encoding='utf-8') as fout:
@@ -104,7 +104,7 @@ with tf.Session() as sess:
                 fout.write("\n".join(_refs))
 
             logging.info("# write results")
-            model_output = "trans: The%02dL Epoch loss is %.2f" % (epoch, _loss)
+            model_output = "trans_ The%02dL Epoch loss is %.2f" % (epoch, _loss)
             if not os.path.exists(hp.eval_result): os.makedirs(hp.eval_result)
             translation_path = os.path.join(hp.eval_result, model_output)
             with open(translation_path, 'w',encoding='utf-8') as fout:
