@@ -1,4 +1,4 @@
 tensorflow==1.13.1
 tf_metrics==0.0.1
-numpy==1.16.3
+numpy==1.22.0
 python==3.6.2
